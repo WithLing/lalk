@@ -1,0 +1,56 @@
+[project]
+name = "lalk"
+version = "0.1.0"
+description = "Local real-time voice agent SDK and desktop sidecar"
+requires-python = ">=3.11"
+dependencies = [
+    "bumblehive>=0.3.0,<3",
+    "certifi>=2024.8.30",
+    "numpy>=1.26.4,<3",
+    "onnxruntime~=1.24.3",
+    "sherpa-onnx==1.13.4",
+    "sounddevice>=0.5.3,<0.6",
+    "websockets>=15,<18",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller==6.21.0",
+]
+server = [
+    "fastapi>=0.115,<1.0",
+    "openai>=1.0,<3",
+    "uvicorn[standard]>=0.30,<1.0",
+]
+test = [
+    "httpx>=0.27,<1.0",
+    "pyright>=1.1.400,<2",
+    "pytest>=8,<10",
+    "pytest-asyncio>=0.24,<2",
+    "pytest-cov>=6,<8",
+    "ruff>=0.12,<1",
+]
+
+[project.scripts]
+lalk-server = "lalk_server.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lalk", "server/src/lalk_server"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "server/tests"]
+asyncio_mode = "auto"
+addopts = ["--import-mode=importlib"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/lalk/tts/_vendor/volcengine/protocols.py" = ["E501", "UP006", "UP035"]
