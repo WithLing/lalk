@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #1b1b1e;
+  --card: #ffffff;
+  --card-foreground: #27272a;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --secondary: #f6f6f7;
+  --secondary-hover: #ececef;
+  --accent: #f8f8f9;
+  --border: #e3e3e7;
+  --border-strong: #d3d3d9;
+  --subtle: #a1a1aa;
+  --agent: #7064e8;
+  --client: #3e74ed;
+  --brand: #50bd91;
+  --brand-hover: #43aa80;
+  --danger: #b64e48;
+  --danger-soft: #fbe9e7;
+  --event-name: #7064e8;
+  --shadow: 0 18px 60px rgb(0 0 0 / 12%);
+  --radius: 5px;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --background: #111113;
+  --foreground: #f4f4f5;
+  --card: #18181b;
+  --card-foreground: #e4e4e7;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --secondary: #242427;
+  --secondary-hover: #303034;
+  --accent: #1d1d20;
+  --border: #303034;
+  --border-strong: #46464c;
+  --subtle: #71717a;
+  --agent: #9b91ff;
+  --client: #75a0ff;
+  --brand: #42a77e;
+  --brand-hover: #53b98f;
+  --danger: #f3a7a2;
+  --danger-soft: #4b2525;
+  --event-name: #9b91ff;
+  --shadow: 0 18px 70px rgb(0 0 0 / 38%);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body, button, input, select, textarea { font: inherit; }
+button, input, select, textarea { color: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--client) 55%, transparent);
+  outline-offset: 2px;
+}
+h1, h2, h3, h4, p { margin: 0; }
+.window-drag-region {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  left: 78px;
+  height: 32px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 10px; background: var(--border-strong); background-clip: padding-box; }
+@keyframes streaming-transcript-caret-pulse {
+  0%, 100% { opacity: .28; }
+  50% { opacity: .8; }
+}
+
+.streaming-transcript { display: inline; }
+.streaming-transcript-caret {
+  display: inline-block;
+  width: 2px;
+  height: .9em;
+  margin-left: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  vertical-align: -.08em;
+  animation: streaming-transcript-caret-pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-transcript-caret { animation: none; }
+}

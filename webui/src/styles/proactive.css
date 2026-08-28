@@ -1,0 +1,180 @@
+.proactive-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: color-mix(in srgb, var(--bg, #f3f3ef) 58%, transparent);
+  backdrop-filter: blur(18px) saturate(0.85);
+}
+
+.proactive-busy-notice {
+  position: fixed;
+  top: 58px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  width: min(440px, calc(100vw - 48px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 18px 20px;
+  color: var(--text, #191a18);
+  background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 11%, transparent);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 16%);
+  backdrop-filter: blur(18px);
+}
+
+.proactive-busy-notice strong {
+  display: block;
+  max-width: 240px;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proactive-busy-notice p:last-child {
+  margin: 5px 0 0;
+  color: color-mix(in srgb, currentColor 60%, transparent);
+  font-size: 12px;
+}
+
+.proactive-busy-actions {
+  display: flex;
+  flex: none;
+  gap: 7px;
+}
+
+.proactive-busy-actions button {
+  min-height: 36px;
+  padding: 0 11px;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.proactive-busy-actions button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.proactive-call-card {
+  width: min(420px, 100%);
+  padding: 42px 34px 30px;
+  text-align: center;
+  color: var(--text, #191a18);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 11%, transparent);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 18%);
+}
+
+.proactive-call-pulse {
+  position: relative;
+  display: grid;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 24px;
+  place-items: center;
+  color: white;
+  background: #2f765c;
+  border-radius: 50%;
+}
+
+.proactive-call-pulse span {
+  position: absolute;
+  inset: -10px;
+  border: 2px solid rgb(47 118 92 / 30%);
+  border-radius: inherit;
+  animation: proactive-ring 1.8s ease-out infinite;
+}
+
+.proactive-call-pulse svg {
+  width: 38px;
+  fill: currentColor;
+}
+
+.proactive-eyebrow {
+  margin: 0 0 9px;
+  color: color-mix(in srgb, currentColor 56%, transparent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.proactive-call-card h2 {
+  margin: 0;
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1.18;
+}
+
+.proactive-status {
+  min-height: 22px;
+  margin: 14px 0 30px;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  font-size: 14px;
+}
+
+.proactive-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.25fr;
+  gap: 10px;
+}
+
+.proactive-actions button {
+  min-height: 46px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 15px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.proactive-actions button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.proactive-secondary {
+  color: inherit;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.proactive-answer {
+  color: white;
+  background: #2f765c;
+}
+
+@keyframes proactive-ring {
+  from { opacity: 0.8; transform: scale(0.88); }
+  to { opacity: 0; transform: scale(1.22); }
+}
+
+@media (max-width: 520px) {
+  .proactive-busy-notice {
+    top: 48px;
+    right: 14px;
+    width: calc(100vw - 28px);
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .proactive-actions { grid-template-columns: 1fr 1fr; }
+  .proactive-answer { grid-column: 1 / -1; grid-row: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proactive-call-pulse span { animation: none; }
+}
