@@ -10,7 +10,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black)](https://www.apple.com/macos/)
-[English](./README.md) | 简体中文
+
+<p><a href="./README.md">English</a> | 简体中文</p>
 
 </div>
 

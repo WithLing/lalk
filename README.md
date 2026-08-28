@@ -10,7 +10,8 @@ A Python SDK, server, and desktop workspace for real-time voice agents.
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black)](https://www.apple.com/macos/)
-English | [简体中文](./README_zh.md)
+
+<p>English | <a href="./README_zh.md">简体中文</a></p>
 
 </div>
 
