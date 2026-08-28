@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Lalk",
+  "version": "0.1.0",
+  "identifier": "com.wangxinhao.lalk",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../webui dev",
+    "devUrl": "http://127.0.0.1:17840",
+    "beforeBuildCommand": "pnpm --dir ../webui build",
+    "frontendDist": "../../webui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Lalk",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1000,
+        "minHeight": 620,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "backgroundThrottling": "disabled"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:17841 ws://127.0.0.1:17841; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg"],
+    "resources": {
+      "sidecar/lalk-server/": "sidecar/lalk-server/"
+    },
+    "macOS": {
+      "minimumSystemVersion": "14.0",
+      "entitlements": "Entitlements.plist",
+      "exceptionDomain": null,
+      "frameworks": [],
+      "signingIdentity": "-"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "lalk",
+  "productName": "Lalk",
+  "displayName": "Lalk",
+  "bundleIdentifier": "com.wangxinhao.lalk",
+  "description": "Lalk 实时语音工作台",
+  "microphoneUsageDescription": "Lalk 需要使用麦克风进行语音对话和实时打断。",
+  "logo": "./icons/logo.png",
+  "iconsDir": "./icons"
+}
