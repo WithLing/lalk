@@ -1,0 +1,17 @@
+{
+  "name": "lalk",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev:server": "node scripts/python-task.mjs -m lalk_server",
+    "dev:web": "pnpm --dir webui dev",
+    "dev:desktop": "pnpm run build:sidecar && node scripts/desktop-task.mjs dev",
+    "build:voiceio": "node scripts/python-task.mjs scripts/build_macos_voice_processing.py",
+    "build:sidecar": "node scripts/python-task.mjs server/scripts/build_sidecar.py",
+    "build:desktop": "pnpm run build:sidecar && node scripts/desktop-task.mjs build --target aarch64-apple-darwin",
+    "doctor": "node scripts/doctor.mjs",
+    "test": "node scripts/python-task.mjs -m pytest -q && pnpm --dir webui test"
+  }
+}
