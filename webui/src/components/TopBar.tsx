@@ -1,6 +1,8 @@
 import { useState } from "react";
+import type { AgentMode } from "../demo-agent-modes";
 import type { ConnectionState, RuntimeStatus } from "../runtime/contracts";
 import { isSessionActive } from "../runtime/status";
+import { AgentModeMenu } from "./AgentModeMenu";
 
 export function TopBar({
   connection,
@@ -9,12 +11,16 @@ export function TopBar({
   hasConversation,
   dark,
   monitorOpen,
+  agentMode,
+  modeSwitching,
+  modeError,
   onConnect,
   onConfigure,
   onOpenVoice,
   onToggleMonitor,
   onNewConversation,
   onToggleTheme,
+  onAgentModeChange,
 }: {
   connection: ConnectionState;
   runtimeState: RuntimeStatus;
@@ -22,12 +28,16 @@ export function TopBar({
   hasConversation: boolean;
   dark: boolean;
   monitorOpen: boolean;
+  agentMode: AgentMode;
+  modeSwitching: boolean;
+  modeError: string | null;
   onConnect: () => void;
   onConfigure: () => void;
   onOpenVoice: () => void;
   onToggleMonitor: () => void;
   onNewConversation: () => Promise<void>;
   onToggleTheme: () => void;
+  onAgentModeChange: (mode: AgentMode) => void;
 }) {
   const [confirmNewConversation, setConfirmNewConversation] = useState(false);
   const active = isSessionActive(runtimeState);
@@ -45,7 +55,12 @@ export function TopBar({
 
   return (
     <header className="topbar">
-      <div aria-hidden="true" />
+      <AgentModeMenu
+        mode={agentMode}
+        pending={pending || modeSwitching}
+        error={modeError}
+        onChange={onAgentModeChange}
+      />
 
       <div className="top-actions">
         <div className="new-conversation-anchor">

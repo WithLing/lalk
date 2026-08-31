@@ -16,13 +16,74 @@
   grid-template-columns: minmax(170px, 1fr) auto;
   align-items: end;
   gap: 24px;
-  padding: 28px 14px 8px;
+  padding: 28px 14px 8px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
   background: color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter: blur(24px) saturate(150%);
   overflow: visible;
 }
 .top-actions { position: relative; display: flex; min-width: max-content; align-items: center; justify-content: flex-end; gap: 6px; }
+.agent-mode-menu-anchor {
+  position: relative;
+  z-index: 2;
+  justify-self: start;
+  transform: translateY(6px);
+  -webkit-app-region: no-drag;
+}
+.agent-mode-trigger {
+  display: flex;
+  width: max-content;
+  height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  transition: background .15s ease, transform .12s ease;
+}
+.agent-mode-trigger:hover:not(:disabled),
+.agent-mode-trigger[aria-expanded="true"] { background: var(--secondary); }
+.agent-mode-trigger:active:not(:disabled) { transform: scale(.985); }
+.agent-mode-trigger:disabled { opacity: .5; }
+.agent-mode-trigger strong { font-size: 13px; font-weight: 650; line-height: 1; white-space: nowrap; }
+.agent-mode-chevron { width: 6px; height: 6px; border-right: 1.5px solid var(--subtle); border-bottom: 1.5px solid var(--subtle); transform: rotate(45deg) translate(-1px, 1px); transition: transform .15s ease; }
+.agent-mode-trigger[aria-expanded="true"] .agent-mode-chevron { transform: rotate(225deg) translate(-1px, -1px); }
+.agent-mode-popover {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 278px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--card) 97%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(22px);
+  animation: agent-mode-popover-in .16s ease;
+}
+.agent-mode-popover > header { padding: 10px 12px 9px; border-bottom: 1px solid var(--border); }
+.agent-mode-popover > header strong,
+.agent-mode-popover > header small { display: block; }
+.agent-mode-popover > header strong { color: var(--foreground); font-size: 11px; font-weight: 680; }
+.agent-mode-popover > header small { margin-top: 3px; color: var(--subtle); font-size: 9px; }
+.agent-mode-options { display: grid; gap: 1px; padding: 5px; }
+.agent-mode-option { display: grid; min-height: 45px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: 10px; }
+.agent-mode-option:hover,
+.agent-mode-option.active { background: var(--secondary); }
+.agent-mode-option-main { display: grid; min-width: 0; height: 45px; grid-template-columns: 21px minmax(0, 1fr); align-items: center; gap: 4px; padding: 0 5px; background: transparent; text-align: left; }
+.agent-mode-option-main > i { color: var(--client); font-size: 11px; font-style: normal; font-weight: 750; text-align: center; }
+.agent-mode-option-main span,
+.agent-mode-option-main strong,
+.agent-mode-option-main small { display: block; min-width: 0; }
+.agent-mode-option-main strong { color: var(--foreground); font-size: 11px; font-weight: 650; }
+.agent-mode-option-main small { margin-top: 3px; overflow: hidden; color: var(--muted-foreground); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.agent-mode-option-snapshot { margin-right: 8px; padding: 6px 7px; border-radius: 7px; background: transparent; color: var(--client); font-size: 9px; font-weight: 650; white-space: nowrap; }
+.agent-mode-option-snapshot:hover { background: color-mix(in srgb, var(--client) 10%, transparent); }
+.agent-mode-menu-error { margin: 0; padding: 9px 12px 10px; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--danger-soft) 65%, transparent); color: var(--danger); font-size: 9px; line-height: 1.45; }
+@keyframes agent-mode-popover-in { from { opacity: 0; transform: translateY(-4px) scale(.985); } }
 .new-conversation-anchor { position: relative; }
 .icon-button,
 .configuration-entry {

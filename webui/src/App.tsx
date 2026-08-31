@@ -7,6 +7,15 @@ import { MonitorPanel } from "./components/MonitorPanel";
 import { ProactiveCall } from "./components/ProactiveCall";
 import { TopBar } from "./components/TopBar";
 import { VoicePage } from "./components/VoicePage";
+import {
+  applyAgentMode,
+  loadGeneralModeSnapshot,
+  loadStoredAgentMode,
+  saveGeneralModeSnapshot,
+  saveStoredAgentMode,
+  type AgentMode,
+} from "./demo-agent-modes";
+import type { AppConfig } from "./runtime/contracts";
 import { isSessionActive } from "./runtime/status";
 import { useConfiguration } from "./runtime/use-configuration";
 import { useRuntime } from "./runtime/use-runtime";
@@ -29,6 +38,9 @@ export default function App() {
   const configuration = useConfiguration(state.connection);
   const configResponse = configuration.response;
   const [view, setView] = useState<AppView>(viewFromHash);
+  const [agentMode, setAgentMode] = useState<AgentMode>(loadStoredAgentMode);
+  const [modeSwitching, setModeSwitching] = useState(false);
+  const [modeError, setModeError] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<Exclude<AppView, "settings">>("voice");
   const [eventsCollapsed, setEventsCollapsed] = useState(() => {
     const stored = localStorage.getItem("lalk-events-collapsed");
@@ -106,6 +118,54 @@ export default function App() {
     configuration.clearResponseError();
   };
 
+  const saveSettings = async (config: AppConfig) => {
+    await configuration.save(config);
+    if (agentMode === "general") saveGeneralModeSnapshot(config);
+  };
+
+  const switchAgentMode = async (nextMode: AgentMode) => {
+    const currentConfig = configResponse?.config;
+    if (
+      currentConfig === null
+      || currentConfig === undefined
+      || nextMode === agentMode
+      || modeSwitching
+    ) return;
+
+    const generalSnapshot = nextMode === "general"
+      ? loadGeneralModeSnapshot()
+      : null;
+    if (nextMode === "general" && generalSnapshot === null) {
+      setModeError("找不到通用模式配置，请先在设置中保存一次配置。");
+      return;
+    }
+
+    setModeSwitching(true);
+    setModeError(null);
+    const restartAfterSwitch = activeSession;
+    try {
+      if (agentMode === "general") saveGeneralModeSnapshot(currentConfig);
+      if (activeSession) await runtime.stop();
+
+      const nextConfig = applyAgentMode(
+        currentConfig,
+        nextMode,
+        generalSnapshot,
+      );
+      await configuration.save(nextConfig);
+      saveStoredAgentMode(nextMode);
+      setAgentMode(nextMode);
+      await runtime.newConversation();
+      if (restartAfterSwitch) await runtime.start();
+    } catch (reason) {
+      setModeError(
+        reason instanceof Error ? reason.message : "模式切换失败，请重试。",
+      );
+    } finally {
+      setModeSwitching(false);
+    }
+  };
+
   const proactiveCall = state.proactiveOffer && (
     <ProactiveCall
       offer={state.proactiveOffer}
@@ -137,7 +197,7 @@ export default function App() {
           backLabel={previousView === "voice" ? "返回语音" : "返回工作台"}
           onBack={() => navigate(previousView)}
           onRetry={configuration.retry}
-          onSave={configuration.save}
+          onSave={saveSettings}
         />
         {proactiveCall}
       </>
@@ -178,12 +238,16 @@ export default function App() {
           hasConversation={state.turns.length > 0}
           dark={dark}
           monitorOpen={monitorOpen}
+          agentMode={agentMode}
+          modeSwitching={modeSwitching}
+          modeError={modeError}
           onConnect={connect}
           onConfigure={openSettings}
           onOpenVoice={() => navigate("voice")}
           onToggleMonitor={() => setMonitorOpen((value) => !value)}
           onNewConversation={runtime.newConversation}
           onToggleTheme={() => setDark((value) => !value)}
+          onAgentModeChange={(mode) => { void switchAgentMode(mode); }}
         />
 
         <section className={`workspace ${eventsCollapsed ? "events-collapsed" : ""}`}>
