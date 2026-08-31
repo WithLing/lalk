@@ -62,6 +62,11 @@ const BUILTIN_TOOL_COPY: Record<string, ToolCopy> = {
     succeeded: "已查看 Shell 任务",
     failed: "已尝试查看 Shell 任务",
   },
+  end_voice_session: {
+    running: "正在结束语音会话",
+    succeeded: "已结束语音会话",
+    failed: "未能结束语音会话",
+  },
 };
 
 const INFERRED_TOOL_COPY: Array<{

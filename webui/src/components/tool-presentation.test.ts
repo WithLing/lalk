@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 import type { ToolPart } from "../runtime/contracts";
 import { getToolPresentation, isKnownTool } from "./tool-presentation";
 
-function tool(name: string, argumentsValue: Record<string, unknown>): ToolPart {
+function tool(
+  name: string,
+  argumentsValue: Record<string, unknown>,
+  state: ToolPart["state"] = "succeeded",
+): ToolPart {
   return {
     type: "tool",
     call_id: "call-1",
     name,
     arguments: argumentsValue,
-    state: "succeeded",
+    state,
     result: "{}",
     elapsed_ms: 12.5,
   };
@@ -25,6 +29,19 @@ describe("getToolPresentation", () => {
       technicalName: "read_file",
     });
     expect(isKnownTool("read_file")).toBe(true);
+  });
+
+  it("uses explicit session-ending copy for the voice session tool", () => {
+    expect(
+      getToolPresentation(tool("end_voice_session", {}, "running")).label,
+    ).toBe("正在结束语音会话");
+    expect(getToolPresentation(tool("end_voice_session", {})).label).toBe(
+      "已结束语音会话",
+    );
+    expect(
+      getToolPresentation(tool("end_voice_session", {}, "failed")).label,
+    ).toBe("未能结束语音会话");
+    expect(isKnownTool("end_voice_session")).toBe(true);
   });
 
   it("infers a neutral action for an unfamiliar tool with a recognizable verb", () => {
