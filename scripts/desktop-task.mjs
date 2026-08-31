@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const tauriRoot = path.join(projectRoot, "desktop", "src-tauri");
 const arguments_ = process.argv.slice(2);
-let brandId = process.env.LALK_DESKTOP_BRAND ?? "lalk";
+let brandId = "lalk";
 
 for (let index = 0; index < arguments_.length; index += 1) {
   const argument = arguments_[index];
