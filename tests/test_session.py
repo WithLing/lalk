@@ -1928,6 +1928,222 @@ async def test_uses_completed_history_for_the_next_turn() -> None:
     await _cancel(task)
 
 
+@pytest.mark.parametrize(
+    (
+        "pre_tool_text",
+        "post_tool_deltas",
+        "expected_spoken_text",
+        "expected_visible_deltas",
+    ),
+    [
+        pytest.param(
+            "好的，再见。",
+            ["再", "见。"],
+            "好的，再见。",
+            ["好的，再见。"],
+            id="pre-tool-farewell-wins",
+        ),
+        pytest.param(
+            None,
+            ["好的，", "再见。"],
+            "好的，再见。",
+            ["好的，", "再见。"],
+            id="post-tool-farewell-plays-when-silent",
+        ),
+        pytest.param(
+            "   ",
+            ["再见。"],
+            "再见。",
+            ["   ", "再见。"],
+            id="whitespace-does-not-count-as-speech",
+        ),
+        pytest.param(
+            "已经处理完毕。",
+            ["再见。", "祝您生活愉快。"],
+            "已经处理完毕。",
+            ["已经处理完毕。"],
+            id="all-post-tool-deltas-are-suppressed",
+        ),
+    ],
+)
+async def test_end_voice_session_plays_exactly_one_farewell(
+    pre_tool_text: str | None,
+    post_tool_deltas: list[str],
+    expected_spoken_text: str,
+    expected_visible_deltas: list[str],
+) -> None:
+    events: list[VoiceEvent] = []
+    session, audio, vad, asr, agent, tts, _log = _session(events)
+    asr.transcripts.append(Transcript("结束会话"))
+    post_tool_text = "".join(post_tool_deltas)
+    tool_call = {
+        "role": "assistant",
+        "content": pre_tool_text,
+        "tool_calls": [
+            {
+                "id": "call-end",
+                "type": "function",
+                "function": {"name": "end_voice_session", "arguments": "{}"},
+            }
+        ],
+    }
+    tool_result = {
+        "role": "tool",
+        "tool_call_id": "call-end",
+        "name": "end_voice_session",
+        "content": '{"ending":true}',
+    }
+    pre_tool_events = (
+        [
+            AgentEvent(
+                kind=MODEL_STREAM_CONTENT_DELTA,
+                run_id="run-1",
+                payload={"delta": pre_tool_text},
+            )
+        ]
+        if pre_tool_text is not None
+        else []
+    )
+    agent.next_events = [
+        AgentEvent(kind=MODEL_REQUEST_STARTED, run_id="run-1"),
+        *pre_tool_events,
+        AgentEvent(
+            kind=MODEL_RESPONSE_FINISHED,
+            run_id="run-1",
+            payload={"message": tool_call},
+        ),
+        AgentEvent(kind=TOOL_CALLS_STARTED, run_id="run-1"),
+        AgentEvent(
+            kind=TOOL_CALL_STARTED,
+            run_id="run-1",
+            payload={
+                "tool_call": {
+                    "call_id": "call-end",
+                    "name": "end_voice_session",
+                    "arguments": {},
+                }
+            },
+        ),
+        AgentEvent(
+            kind=TOOL_CALL_FINISHED,
+            run_id="run-1",
+            payload={
+                "tool_result": tool_result,
+                "ok": True,
+                "duration_s": 0.001,
+            },
+        ),
+        AgentEvent(kind=TOOL_CALLS_FINISHED, run_id="run-1"),
+        AgentEvent(kind=MODEL_REQUEST_STARTED, run_id="run-1"),
+        *[
+            AgentEvent(
+                kind=MODEL_STREAM_CONTENT_DELTA,
+                run_id="run-1",
+                payload={"delta": delta},
+            )
+            for delta in post_tool_deltas
+        ],
+        AgentEvent(
+            kind=MODEL_RESPONSE_FINISHED,
+            run_id="run-1",
+            payload={"message": {"role": "assistant", "content": post_tool_text}},
+        ),
+    ]
+    task = await _start(session, audio)
+
+    _emit_utterance(audio, vad)
+    await agent.result_returned.wait()
+    await _wait_until(lambda: "".join(tts.parts) == expected_spoken_text)
+
+    assert [
+        event.delta for event in events if isinstance(event, AgentTextEvent)
+    ] == expected_visible_deltas
+
+    await _cancel(task)
+
+
+async def test_non_terminal_tool_keeps_text_before_and_after_tool() -> None:
+    events: list[VoiceEvent] = []
+    session, audio, vad, asr, agent, tts, _log = _session(events)
+    asr.transcripts.append(Transcript("查询天气"))
+    tool_call = {
+        "role": "assistant",
+        "content": "我帮您查一下。",
+        "tool_calls": [
+            {
+                "id": "call-weather",
+                "type": "function",
+                "function": {"name": "get_weather", "arguments": "{}"},
+            }
+        ],
+    }
+    tool_result = {
+        "role": "tool",
+        "tool_call_id": "call-weather",
+        "name": "get_weather",
+        "content": '{"condition":"sunny"}',
+    }
+    agent.next_events = [
+        AgentEvent(kind=MODEL_REQUEST_STARTED, run_id="run-1"),
+        AgentEvent(
+            kind=MODEL_STREAM_CONTENT_DELTA,
+            run_id="run-1",
+            payload={"delta": "我帮您查一下。"},
+        ),
+        AgentEvent(
+            kind=MODEL_RESPONSE_FINISHED,
+            run_id="run-1",
+            payload={"message": tool_call},
+        ),
+        AgentEvent(kind=TOOL_CALLS_STARTED, run_id="run-1"),
+        AgentEvent(
+            kind=TOOL_CALL_STARTED,
+            run_id="run-1",
+            payload={
+                "tool_call": {
+                    "call_id": "call-weather",
+                    "name": "get_weather",
+                    "arguments": {},
+                }
+            },
+        ),
+        AgentEvent(
+            kind=TOOL_CALL_FINISHED,
+            run_id="run-1",
+            payload={
+                "tool_result": tool_result,
+                "ok": True,
+                "duration_s": 0.001,
+            },
+        ),
+        AgentEvent(kind=TOOL_CALLS_FINISHED, run_id="run-1"),
+        AgentEvent(kind=MODEL_REQUEST_STARTED, run_id="run-1"),
+        AgentEvent(
+            kind=MODEL_STREAM_CONTENT_DELTA,
+            run_id="run-1",
+            payload={"delta": "今天是晴天。"},
+        ),
+        AgentEvent(
+            kind=MODEL_RESPONSE_FINISHED,
+            run_id="run-1",
+            payload={
+                "message": {"role": "assistant", "content": "今天是晴天。"}
+            },
+        ),
+    ]
+    task = await _start(session, audio)
+
+    _emit_utterance(audio, vad)
+    await agent.result_returned.wait()
+    await _wait_until(lambda: "".join(tts.parts) == "我帮您查一下。今天是晴天。")
+
+    assert [
+        event.delta for event in events if isinstance(event, AgentTextEvent)
+    ] == ["我帮您查一下。", "今天是晴天。"]
+
+    await _cancel(task)
+
+
 async def test_capture_continues_while_response_is_playing() -> None:
     session, audio, vad, asr, _agent, tts, _log = _session()
     asr.transcripts.append(Transcript("用户问题"))

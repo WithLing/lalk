@@ -166,6 +166,15 @@ class _TurnJournal:
     def tools_active(self) -> bool:
         return bool(self._active_tool_ids)
 
+    @property
+    def latest_assistant_has_text(self) -> bool:
+        for message in reversed(self._messages):
+            if message.get("role") != "assistant":
+                continue
+            content = message.get("content")
+            return isinstance(content, str) and bool(content.strip())
+        return False
+
     async def wait_until_tools_finish(self) -> None:
         await self._tools_finished.wait()
 
@@ -321,6 +330,7 @@ class _TurnRunner:
         self._playback_started = False
         self._playback_active = False
         self._last_spoken_text = ""
+        self._suppress_after_end_tool = False
 
     @property
     def playback_active(self) -> bool:
@@ -441,6 +451,20 @@ class _TurnRunner:
         turn = self._require_turn()
         try:
             async for event in turn:
+                if event.kind == TOOL_CALL_STARTED:
+                    call = event.payload.get("tool_call")
+                    if (
+                        isinstance(call, Mapping)
+                        and call.get("name") == "end_voice_session"
+                    ):
+                        self._suppress_after_end_tool = (
+                            self._journal.latest_assistant_has_text
+                        )
+
+                if event.kind in _TEXT_EVENTS and self._suppress_after_end_tool:
+                    self._journal.record(event)
+                    continue
+
                 self._observe_agent_event(event)
                 response_index = self._journal.response_index
                 self._journal.record(event)
