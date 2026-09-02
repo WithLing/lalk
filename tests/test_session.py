@@ -2314,11 +2314,24 @@ async def test_backchannel_filter_falls_back_to_vad_when_unavailable(
     await _cancel(task)
 
 
-async def test_streaming_filter_falls_back_to_vad_stop_without_transcript() -> None:
+@pytest.mark.parametrize(
+    ("final", "expected_interrupts"),
+    [
+        ("嗯嗯。", 0),
+        ("等一下。", 1),
+        ("", 0),
+    ],
+)
+async def test_streaming_filter_waits_for_final_without_interim_transcript(
+    final: str,
+    expected_interrupts: int,
+) -> None:
     session, audio, vad, asr, _agent, _tts, _log = _session(
         backchannel_filter_enabled=True,
     )
     asr.supports_interim_transcripts = True
+    asr.transcripts.append(Transcript(final, is_final=True))
+    asr.transcription_allowed.clear()
     audio.queue_playback()
     task = await _start(session, audio)
     session.submit_text("请继续说明")
@@ -2331,9 +2344,18 @@ async def test_streaming_filter_falls_back_to_vad_stop_without_transcript() -> N
 
     vad.states.append(VADState.SILENCE)
     audio.emit(_chunk(2))
-    await audio.interrupted.wait()
+    await _wait_until(lambda: len(asr.calls) == 1)
 
-    assert audio.interrupt_calls == 1
+    assert audio.interrupt_calls == 0
+
+    asr.transcription_allowed.set()
+    await asr.transcribed.wait()
+    if expected_interrupts:
+        await audio.interrupted.wait()
+    else:
+        await _wait_until(lambda: not asr.streams[0]._outputs.qsize())
+
+    assert audio.interrupt_calls == expected_interrupts
     await _cancel(task)
 
 

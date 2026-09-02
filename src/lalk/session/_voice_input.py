@@ -66,9 +66,7 @@ def _is_backchannel_candidate(
     phrases: frozenset[str],
 ) -> bool:
     content = _normalize_speech_content(text)
-    return bool(text) and (
-        not content or _could_be_backchannel(content, phrases)
-    )
+    return not text or not content or _could_be_backchannel(content, phrases)
 
 
 def _is_ignorable_backchannel(
@@ -76,7 +74,7 @@ def _is_ignorable_backchannel(
     phrases: frozenset[str],
 ) -> bool:
     content = _normalize_speech_content(text)
-    return bool(text) and (not content or _is_backchannel(content, phrases))
+    return not content or _is_backchannel(content, phrases)
 
 
 class _ReportError(Protocol):
