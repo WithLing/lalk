@@ -37,8 +37,13 @@ from ..observability import (
     VoiceEvent,
 )
 from ..observability._turn_tracker import _TurnMetricsTracker
-from ..tts import TTS, TextSegmenter, TTSResult, TTSStream, TTSTextMark
-from ..tts.text import MarkdownSpeechNormalizer
+from ..tts import (
+    TTS,
+    StreamingTextProcessor,
+    TTSResult,
+    TTSStream,
+    TTSTextMark,
+)
 
 _TEXT_EVENTS = (MODEL_STREAM_CONTENT_DELTA, MODEL_STREAM_REFUSAL_DELTA)
 _PLAYBACK_PROGRESS_INTERVAL_SECONDS = 0.05
@@ -562,8 +567,7 @@ class _TurnRunner:
             raise AudioError(f"Audio playback failed: {error}") from error
 
     async def _stream_tts_text(self) -> AsyncIterator[str]:
-        normalizer = MarkdownSpeechNormalizer()
-        segmenter = TextSegmenter()
+        processor = StreamingTextProcessor()
         response_index = 0
 
         def ready_parts(
@@ -572,11 +576,9 @@ class _TurnRunner:
             *,
             finish: bool = False,
         ) -> list[str]:
-            parts = segmenter.push(text) if text else []
+            parts = processor.push(text) if text else []
             if finish:
-                remaining = segmenter.flush()
-                if remaining:
-                    parts.append(remaining)
+                parts.extend(processor.flush())
             for part in parts:
                 self._record_first_tts_text()
                 self._playback.submit(index, part)
@@ -586,7 +588,7 @@ class _TurnRunner:
             item = await self._tts_input.get()
             if item is None:
                 for text in ready_parts(
-                    normalizer.flush(),
+                    "",
                     response_index,
                     finish=True,
                 ):
@@ -595,13 +597,13 @@ class _TurnRunner:
 
             if isinstance(item, _TextDelta):
                 response_index = item.response_index
-                for text in ready_parts(normalizer.push(item.text), response_index):
+                for text in ready_parts(item.text, response_index):
                     yield text
                 continue
 
             if isinstance(item, _ResponseEnd):
                 for text in ready_parts(
-                    normalizer.flush(),
+                    "",
                     item.response_index,
                     finish=True,
                 ):

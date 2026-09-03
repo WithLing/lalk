@@ -2,7 +2,7 @@
 
 from .errors import TTSError, TTSStateError
 from .protocols import TTS, TextInput, TTSOutput, TTSStream
-from .text import TextSegmenter
+from .text import StreamingTextProcessor, TextSegmenter
 from .types import TTSResult, TTSTextMark
 from .volcengine import VolcengineTTS
 
@@ -14,6 +14,7 @@ __all__ = [
     "TTSStateError",
     "TTSStream",
     "TTSTextMark",
+    "StreamingTextProcessor",
     "TextInput",
     "TextSegmenter",
     "VolcengineTTS",

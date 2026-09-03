@@ -260,3 +260,54 @@ class TextSegmenter:
         text = self._buffer[:end].strip()
         self._buffer = self._buffer[end:]
         return text
+
+
+class StreamingTextProcessor:
+    """Normalize and segment streamed text for incremental speech synthesis."""
+
+    def __init__(
+        self,
+        *,
+        normalize_markdown: bool = True,
+        first_chunk_chars: int = 6,
+        chunk_chars: int = 24,
+    ) -> None:
+        """Configure streamed text normalization and chunk limits."""
+
+        self._normalize_markdown = normalize_markdown
+        self._normalizer = (
+            MarkdownSpeechNormalizer() if normalize_markdown else None
+        )
+        self._segmenter = TextSegmenter(
+            first_chunk_chars=first_chunk_chars,
+            chunk_chars=chunk_chars,
+        )
+
+    def push(self, delta: str) -> list[str]:
+        """Consume one text delta and return chunks ready for synthesis."""
+
+        if self._normalizer is not None:
+            delta = self._normalizer.push(delta)
+        return self._segmenter.push(delta)
+
+    def flush(self) -> list[str]:
+        """Return remaining chunks and prepare for a new response."""
+
+        chunks: list[str] = []
+        if self._normalizer is not None:
+            normalized = self._normalizer.flush()
+            if normalized:
+                chunks.extend(self._segmenter.push(normalized))
+
+        remaining = self._segmenter.flush()
+        if remaining:
+            chunks.append(remaining)
+        return chunks
+
+    def reset(self) -> None:
+        """Discard pending text and prepare for a new response."""
+
+        self._normalizer = (
+            MarkdownSpeechNormalizer() if self._normalize_markdown else None
+        )
+        self._segmenter.reset()

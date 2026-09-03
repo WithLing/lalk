@@ -17,13 +17,17 @@ from lalk.agent import (
     BumblehiveAgent,
 )
 from lalk.audio import AudioChunk, LocalAudio
-from lalk.tts import TextSegmenter, VolcengineTTS
+from lalk.tts import StreamingTextProcessor, VolcengineTTS
 
 _TEXT_EVENTS = (MODEL_STREAM_CONTENT_DELTA, MODEL_STREAM_REFUSAL_DELTA)
 
 
 async def response_text(turn: AgentTurn) -> AsyncIterator[str]:
-    segmenter = TextSegmenter()
+    processor = StreamingTextProcessor(
+        normalize_markdown=True,
+        first_chunk_chars=6,
+        chunk_chars=24,
+    )
 
     async for event in turn:
         if event.kind not in _TEXT_EVENTS:
@@ -33,12 +37,11 @@ async def response_text(turn: AgentTurn) -> AsyncIterator[str]:
         if not isinstance(delta, str):
             continue
         print(delta, end="", flush=True)
-        for text in segmenter.push(delta):
+        for text in processor.push(delta):
             yield text
 
-    remaining = segmenter.flush()
-    if remaining:
-        yield remaining
+    for text in processor.flush():
+        yield text
 
 
 async def main() -> None:

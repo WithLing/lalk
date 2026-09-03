@@ -1,6 +1,6 @@
 import pytest
 
-from lalk.tts import TextSegmenter
+from lalk.tts import StreamingTextProcessor, TextSegmenter
 from lalk.tts.text import MarkdownSpeechNormalizer
 
 
@@ -115,3 +115,37 @@ def test_reset_discards_buffered_text() -> None:
 
     assert segmenter.flush() is None
     assert segmenter.push("甲乙丙丁") == ["甲乙丙丁"]
+
+
+def test_streaming_processor_normalizes_and_segments_markdown() -> None:
+    processor = StreamingTextProcessor(first_chunk_chars=20)
+
+    assert processor.push("# **你好**，看[文") == ["你好，"]
+    assert processor.push("档](https://example.com)。") == ["看文档。"]
+    assert processor.flush() == []
+
+
+def test_streaming_processor_can_preserve_markdown() -> None:
+    processor = StreamingTextProcessor(
+        normalize_markdown=False,
+        first_chunk_chars=4,
+    )
+
+    assert processor.push("# 你好") == ["# 你好"]
+
+
+def test_streaming_processor_flushes_normalizer_before_segmenter() -> None:
+    processor = StreamingTextProcessor(first_chunk_chars=20)
+
+    assert processor.push("Hello!") == []
+    assert processor.flush() == ["Hello!"]
+
+
+def test_streaming_processor_reset_discards_pending_text() -> None:
+    processor = StreamingTextProcessor(first_chunk_chars=4)
+    processor.push("**一二三")
+
+    processor.reset()
+
+    assert processor.flush() == []
+    assert processor.push("甲乙丙丁") == ["甲乙丙丁"]
