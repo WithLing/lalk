@@ -9,6 +9,7 @@
 A Python SDK, server, and desktop workspace for real-time voice agents.
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
+[![PyPI](https://img.shields.io/pypi/v/lalk?label=PyPI)](https://pypi.org/project/lalk/)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black)](https://www.apple.com/macos/)
 
 <p>English | <a href="./README_zh.md">简体中文</a></p>
@@ -55,7 +56,13 @@ later**.
 
 ## Quick Start
 
-Create and activate a Python environment:
+Install the Python SDK from PyPI:
+
+```bash
+python -m pip install lalk
+```
+
+For repository development, create and activate a Python environment:
 
 ```bash
 conda create -n lalk_env python=3.11 -y

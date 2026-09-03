@@ -9,6 +9,7 @@
 一个实时语音 Agent Python SDK、服务端与桌面工作台。
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
+[![PyPI](https://img.shields.io/pypi/v/lalk?label=PyPI)](https://pypi.org/project/lalk/)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black)](https://www.apple.com/macos/)
 
 <p><a href="./README.md">English</a> | 简体中文</p>
@@ -52,7 +53,13 @@ Lalk 当前面向 **搭载 M 系列芯片、运行 macOS 14 或更高版本的 A
 
 ## 快速开始
 
-创建并激活 Python 环境：
+从 PyPI 安装 Python SDK：
+
+```bash
+python -m pip install lalk
+```
+
+如需进行仓库开发，请创建并激活 Python 环境：
 
 ```bash
 conda create -n lalk_env python=3.11 -y
