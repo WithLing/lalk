@@ -5,7 +5,6 @@ description = "Local real-time voice agent SDK and desktop sidecar"
 requires-python = ">=3.11"
 dependencies = [
     "bumblehive>=0.3.0,<3",
-    "certifi>=2024.8.30",
     "numpy>=1.26.4,<3",
     "onnxruntime~=1.24.3",
     "sherpa-onnx==1.13.4",
@@ -19,11 +18,9 @@ build = [
 ]
 server = [
     "fastapi>=0.115,<1.0",
-    "openai>=1.0,<3",
     "uvicorn[standard]>=0.30,<1.0",
 ]
 test = [
-    "httpx>=0.27,<1.0",
     "pyright>=1.1.400,<2",
     "pytest>=8,<10",
     "pytest-asyncio>=0.24,<2",
