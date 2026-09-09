@@ -17,6 +17,8 @@ from bumblehive.tools import ToolManager
 from ..audio import AudioChunk
 from .instructions import compose_voice_agent_instructions
 
+_DEFAULT_CONTEXT_WINDOW_TOKENS = 600_000
+
 
 def _with_voice_instructions(
     config: bumblehive.BumblehiveConfig,
@@ -60,6 +62,14 @@ class BumblehiveAgent:
 
     def __init__(self, config: ConfigInput = None) -> None:
         resolved = load_config(config)
+        if resolved.runtime.context_window_tokens is None:
+            resolved = replace(
+                resolved,
+                runtime=replace(
+                    resolved.runtime,
+                    context_window_tokens=_DEFAULT_CONTEXT_WINDOW_TOKENS,
+                ),
+            )
         self._instructions_with_audio = compose_voice_agent_instructions(
             resolved.agent.instructions,
             send_audio_to_llm=True,
