@@ -545,8 +545,10 @@ async def _cancel(task: asyncio.Task[None]) -> None:
         await task
 
 
-async def _wait_until(predicate: Any) -> None:
-    async with asyncio.timeout(1):
+async def _wait_until(
+    predicate: Any, *, timeout: float = 1,  # noqa: ASYNC109 - bounded test wait
+) -> None:
+    async with asyncio.timeout(timeout):
         while not predicate():  # noqa: ASYNC110 - generic test predicate has no event
             await asyncio.sleep(0)
 
@@ -1497,7 +1499,8 @@ async def test_native_tool_loop_keeps_current_audio_and_next_turn_uses_text_hist
     task = await _start(session, audio)
     try:
         _emit_utterance(audio, vad)
-        await _wait_until(lambda: len(session.history.get_history()) == 4)
+        # Native runtime initialization can exceed the fake-only tests' deadline.
+        await _wait_until(lambda: len(session.history.get_history()) == 4, timeout=10)
         assert tool_calls == ["get_weather"]
         assert len(requests) == 2
         first_user = next(m for m in requests[0]["messages"] if m["role"] == "user")
@@ -1514,14 +1517,14 @@ async def test_native_tool_loop_keeps_current_audio_and_next_turn_uses_text_hist
         vad.states.extend([VADState.SPEAKING, VADState.SILENCE])
         audio.emit(_chunk(3))
         audio.emit(_chunk(4))
-        await _wait_until(lambda: len(session.history.get_history()) == 6)
+        await _wait_until(lambda: len(session.history.get_history()) == 6, timeout=10)
         users = [m for m in requests[2]["messages"] if m["role"] == "user"]
         assert users[0] == first_history[0]
         assert users[1]["content"][0] == {"type": "text", "text": "明天呢"}
         assert users[1]["content"][1] != first_user["content"][1]
 
         session.submit_text("继续")
-        await _wait_until(lambda: len(session.history.get_history()) == 8)
+        await _wait_until(lambda: len(session.history.get_history()) == 8, timeout=10)
         assert all(
             isinstance(m["content"], str)
             for m in requests[3]["messages"] if m["role"] == "user"
