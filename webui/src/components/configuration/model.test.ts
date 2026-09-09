@@ -22,6 +22,7 @@ describe("default model configuration", () => {
 
   it("keeps proactive opening disabled by default", () => {
     expect(DEFAULT_CONFIG.opening_enabled).toBe(false);
+    expect(DEFAULT_CONFIG.send_audio_to_llm).toBe(false);
   });
 
   it("keeps false-interruption filtering enabled by default", () => {

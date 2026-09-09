@@ -71,6 +71,7 @@ export function ConfigurationPage({
   const [thinkingEnabled, setThinkingEnabled] = useState(
     initialGeneration.thinkingEnabled,
   );
+  const [sendAudioToLlm, setSendAudioToLlm] = useState(base.send_audio_to_llm);
   const [reasoningEffort, setReasoningEffort] = useState(
     initialGeneration.reasoningEffort,
   );
@@ -167,6 +168,7 @@ export function ConfigurationPage({
     setAsrApiKey(stored.asr.settings.api_key);
     setAsrWorkspaceId(stored.asr.settings.workspace_id);
     setThinkingEnabled(storedGeneration.thinkingEnabled);
+    setSendAudioToLlm(stored.send_audio_to_llm);
     setReasoningEffort(storedGeneration.reasoningEffort);
     setPersonalizationEnabled(stored.personalization_enabled);
     setOpeningEnabled(stored.opening_enabled);
@@ -352,6 +354,7 @@ export function ConfigurationPage({
       },
       personalization_enabled: personalizationEnabled,
       opening_enabled: openingEnabled,
+      send_audio_to_llm: sendAudioToLlm,
       interruption: {
         ...base.interruption,
         backchannel_filter_enabled: backchannelFilterEnabled,
@@ -576,6 +579,19 @@ export function ConfigurationPage({
                           )}
                         </div>
                         <section className="generation-settings" aria-label="生成配置">
+                          <button
+                            className="generation-setting-row"
+                            type="button"
+                            role="switch"
+                            aria-checked={sendAudioToLlm}
+                            onClick={() => changeAgent(() => setSendAudioToLlm((enabled) => !enabled))}
+                          >
+                            <span>
+                              <strong>语音理解增强</strong>
+                              <small>将原始语音一起发送给模型，辅助理解内容和情绪。需模型支持音频输入。</small>
+                            </span>
+                            <i className={`generation-switch ${sendAudioToLlm ? "enabled" : ""}`} aria-hidden="true"><b /></i>
+                          </button>
                           <button
                             className="generation-setting-row"
                             type="button"

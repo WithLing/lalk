@@ -126,6 +126,7 @@ def build_session(
         history=history,
         observers=[observer],
         opening_enabled=config.opening_enabled,
+        send_audio_to_llm=config.send_audio_to_llm,
         input_level_gate=(
             AdaptiveInputLevelGate(minimum_level=vad_config.min_input_level)
             if vad_config.adaptive_input_level

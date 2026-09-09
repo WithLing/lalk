@@ -10,11 +10,14 @@ from lalk_server.config import (
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("send_audio_to_llm", [False, True])
 async def test_config_round_trip_preserves_api_keys(
     tmp_path: Path,
     app_config: AppConfig,
+    send_audio_to_llm: bool,
 ) -> None:
     path = tmp_path / "nested" / "config.json"
+    app_config = app_config.model_copy(update={"send_audio_to_llm": send_audio_to_llm})
 
     await save_config(path, app_config)
 
@@ -115,15 +118,17 @@ def test_bumblehive_api_key_is_required(config_data: dict[str, object]) -> None:
         AppConfig.model_validate(config_data)
 
 
-def test_opening_is_disabled_by_default_and_requires_a_boolean(
+@pytest.mark.parametrize("field", ["opening_enabled", "send_audio_to_llm"])
+def test_session_option_is_disabled_by_default_and_requires_a_boolean(
     config_data: dict[str, object],
+    field: str,
 ) -> None:
-    assert AppConfig.model_validate(config_data).opening_enabled is False
+    assert getattr(AppConfig.model_validate(config_data), field) is False
 
-    config_data["opening_enabled"] = True
-    assert AppConfig.model_validate(config_data).opening_enabled is True
+    config_data[field] = True
+    assert getattr(AppConfig.model_validate(config_data), field) is True
 
-    config_data["opening_enabled"] = 1
+    config_data[field] = 1
     with pytest.raises(ValueError):
         AppConfig.model_validate(config_data)
 

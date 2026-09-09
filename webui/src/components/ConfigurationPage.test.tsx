@@ -88,6 +88,26 @@ describe("ConfigurationPage navigation", () => {
     expect(markup).toContain("不填时使用阿里云公共接口");
   });
 
+  it.each([false, true])("restores audio understanding as %s", async (enabled) => {
+    const { ConfigurationPage } = await import("./ConfigurationPage");
+    const markup = renderToStaticMarkup(
+      <ConfigurationPage
+        config={{ ...DEFAULT_CONFIG, send_audio_to_llm: enabled }}
+        active={false}
+        loadError={null}
+        loading={false}
+        requestError={null}
+        onBack={vi.fn()}
+        onRetry={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(markup).toContain("将原始语音一起发送给模型，辅助理解内容和情绪。需模型支持音频输入。");
+    expect(markup).toContain(`role="switch" aria-checked="${enabled}"><span><strong>语音理解增强`);
+    expect(markup.indexOf("语音理解增强")).toBeLessThan(markup.indexOf("思考模式"));
+  });
+
   it("shows the proactive opening control disabled by default", async () => {
     const { ConfigurationPage } = await import("./ConfigurationPage");
     const markup = renderToStaticMarkup(

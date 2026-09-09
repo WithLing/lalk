@@ -3,8 +3,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import Mock
 
 import bumblehive
+import lalk_server.runtime as runtime_module
 import pytest
 from bumblehive.protocols import ToolCall
 from bumblehive.tools import ToolManager
@@ -94,6 +96,27 @@ class FakeSessionControl:
 
     def request_stop_after_turn(self) -> None:
         self.stop_requested = True
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_build_session_passes_audio_setting_to_sdk(
+    app_config: AppConfig,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    enabled: bool,
+) -> None:
+    runtime = RuntimeController(tmp_path / "config.json")
+    session_factory = Mock(wraps=runtime_module.VoiceSession)
+    monkeypatch.setattr(runtime_module, "VoiceSession", session_factory)
+
+    runtime_module.build_session(
+        app_config.model_copy(update={"send_audio_to_llm": enabled}),
+        runtime,
+        bumblehive.MessageHistory(),
+        runtime.proactive,
+    )
+
+    assert session_factory.call_args.kwargs["send_audio_to_llm"] is enabled
 
 
 @pytest.mark.asyncio

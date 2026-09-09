@@ -107,10 +107,13 @@ describe("demo agent modes", () => {
 
   it("restores every general role field after switching presets", () => {
     const current = generalConfig();
+    current.send_audio_to_llm = true;
     const snapshot = captureGeneralMode(current);
     const support = applyAgentMode(current, "support");
     const restored = applyAgentMode(support, "general", snapshot);
 
+    expect(support.send_audio_to_llm).toBe(true);
+    expect(restored.send_audio_to_llm).toBe(true);
     expect(restored.personalization_enabled).toBe(current.personalization_enabled);
     expect(restored.opening_enabled).toBe(current.opening_enabled);
     expect(restored.inactivity_policy).toEqual(current.inactivity_policy);

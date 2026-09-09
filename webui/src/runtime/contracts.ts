@@ -232,6 +232,7 @@ export interface AppConfig {
   bumblehive: Record<string, unknown>;
   personalization_enabled: boolean;
   opening_enabled: boolean;
+  send_audio_to_llm: boolean;
   tts: {
     provider: "volcengine";
     settings: {

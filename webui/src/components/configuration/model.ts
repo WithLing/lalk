@@ -71,6 +71,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   personalization_enabled: false,
   opening_enabled: false,
+  send_audio_to_llm: false,
   tts: {
     provider: "volcengine",
     settings: {

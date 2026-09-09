@@ -76,6 +76,7 @@ class AppConfig(_ConfigModel):
     bumblehive: dict[str, Any]
     personalization_enabled: bool = Field(default=False, strict=True)
     opening_enabled: bool = Field(default=False, strict=True)
+    send_audio_to_llm: bool = Field(default=False, strict=True)
     tts: VolcengineTTSConfig
     inactivity_policy: ConversationInactivityConfig | None = None
 
