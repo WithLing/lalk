@@ -1,3 +1,6 @@
+import base64
+import io
+import wave
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -13,6 +16,7 @@ from lalk.agent import (
     VOICE_AGENT_INSTRUCTIONS,
     BumblehiveAgent,
 )
+from lalk.audio import AudioChunk, AudioFormat
 
 pytestmark = pytest.mark.asyncio
 
@@ -65,12 +69,16 @@ class _FakeRuntime:
         )
         self.streams: list[_FakeStream] = []
         self.history: Any = None
+        self.requests: list[tuple[Any, Any]] = []
 
     async def initialize_tools(self) -> None:
         self.initialize_calls += 1
 
-    def stream(self, _prompt: str, *, history: Any) -> _FakeStream:
+    def stream(
+        self, prompt: Any, *, history: Any, config: Any = None,
+    ) -> _FakeStream:
         self.history = history
+        self.requests.append((prompt, config))
         stream = _FakeStream(self.events, self.result)
         self.streams.append(stream)
         return stream
@@ -203,3 +211,53 @@ async def test_close_turn_delegates_to_bumblehive_stream(runtime: _FakeRuntime) 
     await stream.aclose()
 
     assert runtime.streams[0].closed
+
+
+@pytest.mark.parametrize("channels", [1, 2])
+async def test_audio_request_contains_original_pcm_and_custom_role(
+    monkeypatch: pytest.MonkeyPatch, channels: int,
+) -> None:
+    configs: list[bumblehive.BumblehiveConfig] = []
+    runtime = _FakeRuntime()
+
+    def build(config: bumblehive.BumblehiveConfig) -> _FakeRuntime:
+        configs.append(config)
+        return runtime
+
+    monkeypatch.setattr(agent_module.bumblehive, "from_config", build)
+    agent = BumblehiveAgent(
+        bumblehive.RuntimeArguments(agent_instructions="Always answer in Cantonese.")
+    )
+    audio = AudioChunk(b"\x01\x00\x02\x00" * 100, AudioFormat(24_000, channels))
+
+    agent.stream("我今天很累", audio=audio, send_audio_to_llm=True)
+    message, config = runtime.requests[-1]
+    assert len(message) == 1
+    assert message[0]["role"] == "user"
+    text, part = message[0]["content"]
+    assert text == {"type": "text", "text": "我今天很累"}
+    assert part["type"] == "input_audio"
+    assert part["input_audio"]["format"] == "wav"
+    with wave.open(io.BytesIO(base64.b64decode(part["input_audio"]["data"]))) as wav:
+        assert wav.getframerate() == 24_000
+        assert wav.getnchannels() == channels
+        assert wav.getsampwidth() == 2
+        assert wav.readframes(wav.getnframes()) == audio.data
+
+    instructions = config["agent"]["instructions"]
+    assert instructions.count("Audio understanding:") == 1
+    assert instructions.index("Runtime integrity:") < instructions.index(
+        "Audio understanding:"
+    ) < instructions.index("Speech interface:")
+    assert instructions.count("Always answer in Cantonese.") == 1
+    assert "If custom role instructions are provided, follow their requirements." in (
+        instructions
+    )
+    assert "Audio understanding:" not in (configs[0].agent.instructions or "")
+
+    # Text turns in the enabled session retain the rules, without stale audio.
+    agent.stream("继续", send_audio_to_llm=True)
+    assert runtime.requests[-1] == ("继续", config)
+    # A disabled call sharing this agent does not inherit the session override.
+    agent.stream("纯文本", audio=audio)
+    assert runtime.requests[-1] == ("纯文本", None)

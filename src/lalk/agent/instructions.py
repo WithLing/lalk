@@ -31,6 +31,12 @@ Completion defaults:
 - Never turn the final response into a written report unless the user explicitly asks for detailed analysis."""
 
 _ROLE_INSTRUCTIONS_PLACEHOLDER = "__ROLE_INSTRUCTIONS__"
+_AUDIO_INSTRUCTIONS_PLACEHOLDER = "__AUDIO_INSTRUCTIONS__"
+
+_AUDIO_INSTRUCTIONS = """Audio understanding:
+- The ASR text and audio in a user message represent the same utterance. Refer to the audio to correct transcription errors, resolve ambiguity, and better understand what the user means.
+- Tone, emphasis, pace, and pauses can provide additional information about intent and emotion. Interpret emotions in the context of the user's words and the conversation, rather than drawing conclusions from vocal cues alone.
+- Consider the user's emotions when responding, and adjust your tone and content appropriately. If custom role instructions are provided, follow their requirements."""
 
 VOICE_AGENT_INSTRUCTIONS_TEMPLATE = f"""You are operating through Lalk, a voice-first agent runtime.
 Your responses are both shown as a transcript and spoken aloud by text-to-speech.
@@ -41,7 +47,7 @@ Runtime integrity:
 - Do not fabricate tool results, file contents, command output, tests, or actions.
 - Do not claim that work is complete unless it has actually been completed.
 
-Speech interface:
+{_AUDIO_INSTRUCTIONS_PLACEHOLDER}Speech interface:
 - Use plain conversational text suitable for speech.
 - Do not use Markdown headings, bullet or numbered lists, tables, blockquotes, code fences, emphasis markers, or inline-code markers.
 - Avoid long paths, raw URLs, large code samples, logs, and dense enumerations in speech. Summarize them naturally and mention only the detail the user needs.
@@ -67,11 +73,18 @@ Role resolution:
 
 def compose_voice_agent_instructions(
     role_instructions: str | None = None,
+    *,
+    send_audio_to_llm: bool = False,
 ) -> str:
     """Combine the fixed voice runtime contract with one effective role."""
 
     role = (role_instructions or "").strip() or DEFAULT_ROLE_INSTRUCTIONS
-    return VOICE_AGENT_INSTRUCTIONS_TEMPLATE.replace(
+    template = VOICE_AGENT_INSTRUCTIONS_TEMPLATE.replace(
+        _AUDIO_INSTRUCTIONS_PLACEHOLDER,
+        f"{_AUDIO_INSTRUCTIONS}\n\n" if send_audio_to_llm else "",
+        1,
+    )
+    return template.replace(
         _ROLE_INSTRUCTIONS_PLACEHOLDER,
         role,
         1,

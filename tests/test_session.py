@@ -1,6 +1,8 @@
 import asyncio
 from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Collection
+from copy import deepcopy
+from pathlib import Path
 from typing import Any, Self, cast
 
 import bumblehive
@@ -16,6 +18,8 @@ from bumblehive.observability import (
     TOOL_CALLS_STARTED,
     AgentEvent,
 )
+from bumblehive.protocols.errors import AgentError
+from bumblehive.providers.openai_chat_completions import OpenAIChatCompletionsProvider
 
 import lalk.session.turn as turn_module
 from lalk import (
@@ -24,6 +28,7 @@ from lalk import (
     VoiceSession,
 )
 from lalk.agent import BumblehiveAgent
+from lalk.agent.bumblehive import _audio_message
 from lalk.asr import ASRResult, Transcript
 from lalk.audio import AudioChunk, AudioFormat, AudioFormatError
 from lalk.observability import (
@@ -310,10 +315,13 @@ class _FakeAgent:
         self.fail_start = False
         self.prompts: list[str] = []
         self.histories: list[list[dict[str, Any]]] = []
+        self.input_audios: list[AudioChunk | None] = []
+        self.audio_enabled: list[bool] = []
         self.turns: list[_FakeTurn] = []
         self.result_returned = asyncio.Event()
         self.next_events: list[AgentEvent | asyncio.Event] | None = None
         self.next_messages: list[dict[str, Any]] | None = None
+        self.next_error: AgentError | None = None
 
     async def start(self) -> None:
         self.log.append("agent.start")
@@ -325,14 +333,21 @@ class _FakeAgent:
         prompt: str,
         *,
         history: bumblehive.MessageHistory | None = None,
+        audio: AudioChunk | None = None,
+        send_audio_to_llm: bool = False,
     ) -> _FakeTurn:
         previous = history.get_history() if history is not None else []
         self.prompts.append(prompt)
         self.histories.append(previous)
+        self.input_audios.append(audio)
+        self.audio_enabled.append(send_audio_to_llm)
         answer = "你好！世界"
+        user_message = {"role": "user", "content": prompt}
+        if send_audio_to_llm and audio is not None:
+            user_message = _audio_message(prompt, audio)[0]
         messages = [
             *previous,
-            {"role": "user", "content": prompt},
+            user_message,
             {"role": "assistant", "content": answer},
         ]
         events: list[AgentEvent | asyncio.Event] | None = self.next_events
@@ -355,10 +370,13 @@ class _FakeAgent:
             self.next_messages = None
         turn = _FakeTurn(
             events,
-            AgentRunResult(final_content=answer, messages=messages),
+            AgentRunResult(
+                final_content=answer, messages=messages, error=self.next_error,
+            ),
             self.result_returned,
         )
         self.turns.append(turn)
+        self.next_error = None
         return turn
 
     async def close(self) -> None:
@@ -472,6 +490,7 @@ def _session(
     incomplete_turn_timeout_seconds: float = 3.0,
     backchannel_filter_enabled: bool = True,
     backchannel_phrases: Collection[str] | None = None,
+    send_audio_to_llm: bool = False,
 ) -> tuple[
     VoiceSession,
     _FakeAudio,
@@ -502,6 +521,7 @@ def _session(
         incomplete_turn_timeout_seconds=incomplete_turn_timeout_seconds,
         backchannel_filter_enabled=backchannel_filter_enabled,
         backchannel_phrases=backchannel_phrases,
+        send_audio_to_llm=send_audio_to_llm,
     )
     return session, audio, vad, asr, agent, tts, log
 
@@ -571,7 +591,9 @@ async def test_emits_adaptive_gate_diagnostics_with_the_input_level() -> None:
     await _cancel(task)
 
 
+@pytest.mark.parametrize("send_audio_to_llm", [False, True])
 async def test_incomplete_pause_keeps_one_voice_turn_until_smart_turn_completes(
+    send_audio_to_llm: bool,
 ) -> None:
     analyzer = _FakeTurnAnalyzer([])
     analyzer.results.extend(
@@ -581,9 +603,10 @@ async def test_incomplete_pause_keeps_one_voice_turn_until_smart_turn_completes(
         ]
     )
     events: list[VoiceEvent] = []
-    session, audio, vad, asr, _agent, _tts, _log = _session(
+    session, audio, vad, asr, agent, _tts, _log = _session(
         events,
         turn_analyzer=analyzer,
+        send_audio_to_llm=send_audio_to_llm,
     )
     asr.transcripts.append(Transcript("完整问题"))
     task = await _start(session, audio)
@@ -597,6 +620,8 @@ async def test_incomplete_pause_keeps_one_voice_turn_until_smart_turn_completes(
     await asr.transcribed.wait()
 
     assert asr.calls[0].data == b"".join(_chunk(value).data for value in (1, 2, 1, 2))
+    await _wait_until(lambda: len(agent.prompts) == 1)
+    assert agent.input_audios == [asr.calls[0] if send_audio_to_llm else None]
     assert [event.state for event in events if isinstance(event, SpeechEvent)] == [
         SpeechState.STARTED,
         SpeechState.STOPPED,
@@ -1380,6 +1405,163 @@ async def test_text_and_voice_inputs_share_history() -> None:
     ]
 
     await _cancel(task)
+
+
+@pytest.mark.parametrize("send_audio_to_llm", [False, True])
+async def test_completed_voice_turns_commit_text_without_mutating_run_audio(
+    send_audio_to_llm: bool,
+) -> None:
+    session, audio, vad, asr, agent, _tts, _log = _session(
+        send_audio_to_llm=send_audio_to_llm,
+    )
+    asr.transcripts.extend([Transcript("第一个问题"), Transcript("第二个问题")])
+    task = await _start(session, audio)
+    try:
+        for count in (1, 2):
+            vad.states.extend([VADState.SPEAKING, VADState.SILENCE])
+            audio.emit(_chunk(count * 10))
+            audio.emit(_chunk(0))
+            await _wait_until(
+                lambda count=count: len(session.history.get_history()) == count * 2
+            )
+
+        assert agent.input_audios == (asr.calls if send_audio_to_llm else [None, None])
+        assert agent.audio_enabled == [send_audio_to_llm] * 2
+        assert agent.histories[1] == [
+            {"role": "user", "content": "第一个问题"},
+            {"role": "assistant", "content": "你好！世界"},
+        ]
+        assert session.history.get_history()[2] == {
+            "role": "user", "content": "第二个问题",
+        }
+        first_content = agent.turns[0].result_value.messages[0]["content"]
+        if send_audio_to_llm:
+            assert first_content[1]["type"] == "input_audio"
+        else:
+            assert first_content == "第一个问题"
+
+        session.submit_text("文字追问")
+        await _wait_until(lambda: len(session.history.get_history()) == 6)
+        assert agent.input_audios[-1] is None
+        assert agent.audio_enabled[-1] is send_audio_to_llm
+        assert all(isinstance(item["content"], str) for item in agent.histories[-1])
+    finally:
+        await _cancel(task)
+
+
+async def test_native_tool_loop_keeps_current_audio_and_next_turn_uses_text_history(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    requests: list[dict[str, Any]] = []
+
+    async def create_stream(
+        _self: OpenAIChatCompletionsProvider, payload: dict[str, Any],
+    ) -> AsyncIterator[dict[str, Any]]:
+        requests.append(deepcopy(payload))
+        if len(requests) == 1:
+            delta = {"tool_calls": [{
+                "index": 0, "id": "weather-1", "type": "function",
+                "function": {"name": "get_weather", "arguments": "{}"},
+            }]}
+            finish_reason = "tool_calls"
+        else:
+            delta = {"content": "你好！世界"}
+            finish_reason = "stop"
+
+        async def chunks() -> AsyncIterator[dict[str, Any]]:
+            yield {"choices": [{"delta": delta, "finish_reason": finish_reason}]}
+
+        return chunks()
+
+    monkeypatch.setattr(OpenAIChatCompletionsProvider, "_create_stream", create_stream)
+    agent = BumblehiveAgent({
+        "runtime": {"workspace": str(tmp_path)},
+        "skills_dir": str(tmp_path / "skills"),
+        "agent": {"instructions": "Always answer in Cantonese.",
+                  "tool_names": ["get_weather"]},
+    })
+    tool_calls: list[str] = []
+
+    @agent.tools.tool(name="get_weather", description="查询天气。")
+    def get_weather() -> str:
+        tool_calls.append("get_weather")
+        return "晴天"
+
+    log: list[str] = []
+    audio, vad, asr, tts = _FakeAudio(log), _FakeVAD(log), _FakeASR(log), _FakeTTS(log)
+    session = VoiceSession(
+        audio=audio, vad=vad, turn_analyzer=_FakeTurnAnalyzer(log),
+        asr=asr, agent=agent, tts=tts, send_audio_to_llm=True,
+    )
+    asr.transcripts.extend([Transcript("天气如何"), Transcript("明天呢")])
+    task = await _start(session, audio)
+    try:
+        _emit_utterance(audio, vad)
+        await _wait_until(lambda: len(session.history.get_history()) == 4)
+        assert tool_calls == ["get_weather"]
+        assert len(requests) == 2
+        first_user = next(m for m in requests[0]["messages"] if m["role"] == "user")
+        second_user = next(m for m in requests[1]["messages"] if m["role"] == "user")
+        assert first_user == second_user
+        assert first_user["content"][0] == {"type": "text", "text": "天气如何"}
+        assert first_user["content"][1]["type"] == "input_audio"
+        assert any(m["role"] == "tool" for m in requests[1]["messages"])
+        first_history = session.history.get_history()
+        assert first_history[0] == {"role": "user", "content": "天气如何"}
+        assert first_history[1]["tool_calls"][0]["id"] == "weather-1"
+        assert first_history[2]["role"] == "tool"
+
+        vad.states.extend([VADState.SPEAKING, VADState.SILENCE])
+        audio.emit(_chunk(3))
+        audio.emit(_chunk(4))
+        await _wait_until(lambda: len(session.history.get_history()) == 6)
+        users = [m for m in requests[2]["messages"] if m["role"] == "user"]
+        assert users[0] == first_history[0]
+        assert users[1]["content"][0] == {"type": "text", "text": "明天呢"}
+        assert users[1]["content"][1] != first_user["content"][1]
+
+        session.submit_text("继续")
+        await _wait_until(lambda: len(session.history.get_history()) == 8)
+        assert all(
+            isinstance(m["content"], str)
+            for m in requests[3]["messages"] if m["role"] == "user"
+        )
+        for request in requests:
+            system = request["messages"][0]["content"]
+            assert system.count("Audio understanding:") == 1
+            assert system.count("Always answer in Cantonese.") == 1
+    finally:
+        await _cancel(task)
+
+
+async def test_failed_model_result_commits_text_and_does_not_resend_audio() -> None:
+    events: list[VoiceEvent] = []
+    session, audio, vad, asr, agent, _tts, _log = _session(
+        events, send_audio_to_llm=True,
+    )
+    asr.transcripts.append(Transcript("再查一下"))
+    agent.next_error = AgentError(
+        code="model_error", message="unavailable", recoverable=True,
+    )
+    task = await _start(session, audio)
+    try:
+        _emit_utterance(audio, vad)
+        await _wait_until(lambda: any(
+            isinstance(event, TurnEvent) and event.state is TurnState.FAILED
+            for event in events
+        ))
+        assert session.history.get_history()[0] == {
+            "role": "user", "content": "再查一下",
+        }
+        # Only the committed copy changes; the native result keeps its audio.
+        content = agent.turns[0].result_value.messages[0]["content"]
+        assert content[1]["type"] == "input_audio"
+        session.submit_text("重试")
+        await _wait_until(lambda: len(agent.prompts) == 2)
+        assert all(isinstance(m["content"], str) for m in agent.histories[1])
+        assert agent.input_audios[1] is None
+    finally:
+        await _cancel(task)
 
 
 async def test_submit_text_validates_session_and_queue() -> None:
@@ -2359,7 +2541,10 @@ async def test_streaming_filter_waits_for_final_without_interim_transcript(
     await _cancel(task)
 
 
-async def test_user_speech_interrupts_playback_and_commits_only_heard_text() -> None:
+@pytest.mark.parametrize("send_audio_to_llm", [False, True])
+async def test_user_speech_interrupts_playback_and_commits_only_heard_text(
+    send_audio_to_llm: bool,
+) -> None:
     class RecordingGate(AdaptiveInputLevelGate):
         def __init__(self) -> None:
             super().__init__()
@@ -2381,6 +2566,7 @@ async def test_user_speech_interrupts_playback_and_commits_only_heard_text() -> 
     session, audio, vad, asr, agent, tts, _log = _session(
         events,
         input_level_gate=gate,
+        send_audio_to_llm=send_audio_to_llm,
     )
     asr.transcripts.extend((Transcript("第一个问题"), Transcript("打断问题")))
     tts.pause_after_parts = 1
@@ -2402,6 +2588,9 @@ async def test_user_speech_interrupts_playback_and_commits_only_heard_text() -> 
         {"role": "user", "content": "第一个问题"},
         {"role": "assistant", "content": "你好！"},
     ]
+    assert agent.input_audios == (
+        asr.calls if send_audio_to_llm else [None, None]
+    )
 
     await _wait_until(
         lambda: any(
@@ -2723,9 +2912,14 @@ async def test_empty_transcript_does_not_start_agent() -> None:
     await _cancel(task)
 
 
-async def test_tts_failure_ends_current_turn_and_continues_listening() -> None:
+@pytest.mark.parametrize("send_audio_to_llm", [False, True])
+async def test_tts_failure_ends_current_turn_and_continues_listening(
+    send_audio_to_llm: bool,
+) -> None:
     events: list[VoiceEvent] = []
-    session, audio, vad, asr, agent, tts, _log = _session(events)
+    session, audio, vad, asr, agent, tts, _log = _session(
+        events, send_audio_to_llm=send_audio_to_llm,
+    )
     asr.transcripts.extend((Transcript("用户问题"), Transcript("再试一次")))
     tts.fail_synthesis = True
     task = await _start(session, audio)
@@ -2754,6 +2948,9 @@ async def test_tts_failure_ends_current_turn_and_continues_listening() -> None:
     assert agent.histories[1] == [
         {"role": "user", "content": "用户问题"},
     ]
+    assert agent.input_audios == (
+        asr.calls if send_audio_to_llm else [None, None]
+    )
     await _cancel(task)
 
 

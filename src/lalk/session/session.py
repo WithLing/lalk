@@ -11,7 +11,7 @@ import bumblehive
 
 from ..agent import BumblehiveAgent
 from ..asr import ASR, ASRResult
-from ..audio import AudioError, AudioFormatError, AudioIO
+from ..audio import AudioChunk, AudioError, AudioFormatError, AudioIO
 from ..observability import (
     Component,
     ComponentEvent,
@@ -130,8 +130,14 @@ class VoiceSession:
         incomplete_turn_timeout_seconds: float = 3.0,
         backchannel_filter_enabled: bool = True,
         backchannel_phrases: Collection[str] | None = None,
+        send_audio_to_llm: bool = False,
     ) -> None:
-        """Store conversation components without starting external resources."""
+        """Store conversation components without starting external resources.
+
+        ``send_audio_to_llm`` sends the current utterance's audio alongside ASR
+        text and enables audio understanding instructions. It requires an LLM
+        supporting Chat Completions ``input_audio``. History retains only text.
+        """
 
         if audio.output_format != tts.output_format:
             raise AudioFormatError(
@@ -148,6 +154,7 @@ class VoiceSession:
         self._turn_analyzer = turn_analyzer
         self._asr = asr
         self._agent = agent
+        self._send_audio_to_llm = send_audio_to_llm
         self._tts = tts
         self._history = history if history is not None else bumblehive.MessageHistory()
         self._session_id = uuid.uuid4().hex
@@ -176,6 +183,7 @@ class VoiceSession:
             ),
             backchannel_filter_enabled=backchannel_filter_enabled,
             backchannel_phrases=backchannel_phrases,
+            send_audio_to_llm=send_audio_to_llm,
         )
         self._input_task: asyncio.Task[None] | None = None
         self._run_task: asyncio.Task[None] | None = None
@@ -399,10 +407,13 @@ class VoiceSession:
                     turn_decided_at=turn_input.turn_decided_at,
                     asr_finished_at=turn_input.asr_finished_at,
                     asr_result=turn_input.asr_result,
+                    input_audio=turn_input.audio,
                 )
                 awaiting_user_response = state is TurnState.COMPLETED
             else:
                 awaiting_user_response = resume_waiting_after_unrecognized_voice
+            # Do not keep the completed utterance's PCM while waiting for input.
+            del turn_input
 
     async def _next_input(
         self,
@@ -492,6 +503,7 @@ class VoiceSession:
         turn_decided_at: float | None = None,
         asr_finished_at: float | None = None,
         asr_result: ASRResult | None = None,
+        input_audio: AudioChunk | None = None,
     ) -> TurnState:
         self._turn_id += 1
         turn_id = self._turn_id
@@ -525,6 +537,8 @@ class VoiceSession:
             turn_decided_at=turn_decided_at,
             asr_finished_at=asr_finished_at,
             asr_result=asr_result,
+            input_audio=input_audio,
+            send_audio_to_llm=self._send_audio_to_llm,
         )
         self._active_turn = runner
         task = asyncio.create_task(

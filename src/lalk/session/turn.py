@@ -293,8 +293,12 @@ class _TurnRunner:
         turn_decided_at: float | None = None,
         asr_finished_at: float | None = None,
         asr_result: ASRResult | None = None,
+        input_audio: AudioChunk | None = None,
+        send_audio_to_llm: bool = False,
     ) -> None:
         self._prompt = prompt
+        self._input_audio = input_audio
+        self._send_audio_to_llm = send_audio_to_llm
         self._history = history
         self._audio = audio
         self._agent = agent
@@ -358,6 +362,18 @@ class _TurnRunner:
         playback = self._playback.response_playback(self._journal.response_count)
         return self._journal.interrupted_messages(playback)
 
+    def _history_messages(self, messages: list[_Message]) -> list[_Message]:
+        """Replace this turn's audio on a copy, leaving the live run untouched."""
+
+        history = [dict(message) for message in messages]
+        if self._send_audio_to_llm and self._input_audio is not None:
+            # The last user message is this turn's input, before any tool calls.
+            for message in reversed(history):
+                if message.get("role") == "user":
+                    message["content"] = self._prompt
+                    break
+        return history
+
     def metrics(self) -> TurnMetrics:
         """Build a final timing and usage snapshot for this turn."""
 
@@ -365,7 +381,15 @@ class _TurnRunner:
 
     async def run(self) -> _TurnOutcome:
         try:
-            self._turn = self._agent.stream(self._prompt, history=self._history)
+            if self._send_audio_to_llm:
+                self._turn = self._agent.stream(
+                    self._prompt,
+                    history=self._history,
+                    audio=self._input_audio,
+                    send_audio_to_llm=True,
+                )
+            else:
+                self._turn = self._agent.stream(self._prompt, history=self._history)
         except Exception as error:
             raise _TurnFailure(
                 component=Component.AGENT,
@@ -428,7 +452,7 @@ class _TurnRunner:
                     )
                 outcome = _TurnOutcome(
                     interrupted=False,
-                    messages=[dict(message) for message in result.messages],
+                    messages=self._history_messages(result.messages),
                     failure=failure,
                 )
             else:

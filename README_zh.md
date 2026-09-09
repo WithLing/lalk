@@ -34,6 +34,7 @@ Python SDK 采用模块化设计，音频、ASR、VAD、Agent、TTS 和回合检
 - Silero VAD、自适应输入门控和 Smart Turn 语义回合检测。
 - 本地 ASR 与可替换的云服务语音识别实现。
 - 基于 Bumblehive 的 Agent Runtime、流式事件与工具执行。
+- 可将用户音频与 ASR 文本一并发送给支持音频的模型。
 - 支持逐词播放标记的流式语音合成。
 - 对话空闲策略与主动跟进能力。
 

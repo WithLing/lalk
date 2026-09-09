@@ -97,6 +97,7 @@ class _VoiceInput:
     speech_stopped_at: float
     estimated_speech_ended_at: float
     turn_decided_at: float
+    audio: AudioChunk | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,8 +218,10 @@ class _VoiceInputProcessor:
         incomplete_turn_timeout_seconds: float,
         backchannel_filter_enabled: bool,
         backchannel_phrases: Collection[str] | None,
+        send_audio_to_llm: bool = False,
     ) -> None:
         self._audio = audio
+        self._send_audio_to_llm = send_audio_to_llm
         self._vad = vad
         self._turn_analyzer = turn_analyzer
         self._asr = asr
@@ -644,6 +647,7 @@ class _VoiceInputProcessor:
                 speech_stopped_at=pending.speech_stopped_at,
                 estimated_speech_ended_at=pending.estimated_speech_ended_at,
                 turn_decided_at=turn_decided_at,
+                audio=audio if self._send_audio_to_llm else None,
             )
         )
         return True

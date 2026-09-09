@@ -36,6 +36,7 @@ Python server as a local sidecar and keeps runtime traffic on localhost.
 - Silero VAD, adaptive input gating, and Smart Turn semantic turn detection.
 - Local ASR and interchangeable cloud speech recognition implementations.
 - Bumblehive-powered Agent runtime with streaming events and tool execution.
+- Optional audio input to compatible LLMs alongside ASR text.
 - Streaming TTS with word-level playback marks.
 - Conversation inactivity policies and proactive follow-up support.
 
