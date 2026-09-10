@@ -37,6 +37,18 @@ def test_invalid_config_is_not_silently_replaced(tmp_path: Path) -> None:
         load_config(path)
 
 
+@pytest.mark.asyncio
+async def test_noise_suppression_defaults_off_and_round_trips(
+    app_config: AppConfig,
+    tmp_path: Path,
+) -> None:
+    assert app_config.audio.noise_suppression is False
+    app_config.audio.noise_suppression = True
+    path = tmp_path / "config.json"
+    await save_config(path, app_config)
+    assert load_config(path).audio.noise_suppression is True
+
+
 def test_vad_input_level_gate_has_one_bounded_setting(
     config_data: dict[str, object],
 ) -> None:

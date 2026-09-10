@@ -112,6 +112,8 @@ def main() -> None:
         "sherpa_onnx",
         "--collect-binaries",
         "numpy",
+        "--collect-binaries",
+        "pyrnnoise",
         "--collect-submodules",
         "bumblehive",
         "--collect-data",

@@ -20,6 +20,7 @@ class AudioConfig(_ConfigModel):
     capture_buffer_ms: int = Field(default=500, gt=0)
     latency: float | Literal["low", "high"] = "low"
     echo_cancellation: Literal["disabled", "preferred", "required"] = "preferred"
+    noise_suppression: bool = False
 
 
 class VADConfig(_ConfigModel):

@@ -12,6 +12,7 @@ from lalk import ConversationInactivityPolicy, InactivityAction, VoiceSession
 from lalk.agent import BumblehiveAgent
 from lalk.asr import QwenAudioASR
 from lalk.audio import LocalAudio
+from lalk.audio.filters import RNNoiseFilter
 from lalk.observability import (
     ErrorEvent,
     MetricsEvent,
@@ -100,6 +101,7 @@ def build_session(
             capture_buffer_ms=audio_config.capture_buffer_ms,
             latency=audio_config.latency,
             echo_cancellation=audio_config.echo_cancellation,
+            input_filter=RNNoiseFilter() if audio_config.noise_suppression else None,
         ),
         vad=SileroVAD(
             threshold=vad_config.threshold,

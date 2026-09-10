@@ -119,6 +119,31 @@ def test_build_session_passes_audio_setting_to_sdk(
     assert session_factory.call_args.kwargs["send_audio_to_llm"] is enabled
 
 
+@pytest.mark.parametrize("enabled", [False, True])
+def test_build_session_configures_input_noise_filter(
+    app_config: AppConfig,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    enabled: bool,
+) -> None:
+    app_config.audio.noise_suppression = enabled
+    runtime = RuntimeController(tmp_path / "config.json")
+    audio_factory = Mock(wraps=runtime_module.LocalAudio)
+    monkeypatch.setattr(runtime_module, "LocalAudio", audio_factory)
+    runtime_module.build_session(
+        app_config,
+        runtime,
+        bumblehive.MessageHistory(),
+        runtime.proactive,
+    )
+    input_filter = audio_factory.call_args.kwargs["input_filter"]
+    if enabled:
+        assert isinstance(input_filter, runtime_module.RNNoiseFilter)
+    else:
+        assert input_filter is None
+    assert audio_factory.call_args.kwargs["input_sample_rate"] == 16_000
+
+
 @pytest.mark.asyncio
 async def test_end_voice_session_tool_requests_graceful_session_stop() -> None:
     agent: Any = SimpleNamespace(tools=ToolManager())
