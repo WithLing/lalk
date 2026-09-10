@@ -33,6 +33,7 @@ Python server as a local sidecar and keeps runtime traffic on localhost.
 
 - Full-duplex voice sessions with natural user interruption.
 - Native macOS VoiceProcessingIO audio with echo cancellation.
+- RNNoise input noise suppression.
 - Silero VAD, adaptive input gating, and Smart Turn semantic turn detection.
 - Local ASR and interchangeable cloud speech recognition implementations.
 - Bumblehive-powered Agent runtime with streaming events and tool execution.

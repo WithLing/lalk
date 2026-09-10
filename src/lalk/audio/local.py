@@ -3,12 +3,14 @@
 import asyncio
 import logging
 from collections.abc import AsyncGenerator
+from contextlib import aclosing
 from dataclasses import dataclass
 from typing import Literal
 
 from ._macos import MacOSVoiceProcessingBackend
 from ._portaudio import PortAudioBackend
-from .errors import AudioDeviceError
+from .errors import AudioDeviceError, AudioStateError
+from .filters.protocols import AudioInputFilter
 from .types import AudioChunk, AudioFormat
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,9 @@ class LocalAudio:
     On macOS, ``echo_cancellation="preferred"`` uses VoiceProcessingIO when
     the native library and its fixed audio formats are available. All other
     configurations use PortAudio through ``sounddevice``.
+
+    ``input_filter`` processes captured audio before it reaches consumers,
+    preserving the input format and leaving playback untouched.
     """
 
     def __init__(
@@ -48,6 +53,7 @@ class LocalAudio:
         capture_buffer_ms: int = 500,
         latency: float | Literal["low", "high"] = "low",
         echo_cancellation: EchoCancellation = "preferred",
+        input_filter: AudioInputFilter | None = None,
     ) -> None:
         """Store local audio settings without opening a device."""
 
@@ -87,6 +93,11 @@ class LocalAudio:
         )
         self._allow_fallback = echo_cancellation == "preferred"
         self._using_voice_processing = False
+        self._input_filter = input_filter
+        self._lifecycle_lock = asyncio.Lock()
+        self._started = False
+        self._closed = False
+        self._filter_started = False
 
         if echo_cancellation == "required" or (
             echo_cancellation == "preferred"
@@ -117,8 +128,24 @@ class LocalAudio:
         return self._backend.played_frames
 
     async def start(self) -> None:
-        """Start the selected local audio backend."""
+        """Initialize the input filter, then start the local audio backend."""
 
+        async with self._lifecycle_lock:
+            if self._closed:
+                raise AudioStateError("LocalAudio has already been closed")
+            if self._started:
+                return
+            try:
+                if self._input_filter is not None:
+                    self._filter_started = True
+                    await self._input_filter.start(self.input_format)
+                await self._start_backend()
+            except BaseException:
+                await self._close_filter()
+                raise
+            self._started = True
+
+    async def _start_backend(self) -> None:
         try:
             await self._backend.start()
         except AudioDeviceError as voice_processing_error:
@@ -143,7 +170,19 @@ class LocalAudio:
     def capture(self) -> AsyncGenerator[AudioChunk, None]:
         """Yield microphone chunks until the audio component closes."""
 
-        return self._backend.capture()
+        if self._input_filter is None:
+            return self._backend.capture()
+        return self._filtered_capture()
+
+    async def _filtered_capture(self) -> AsyncGenerator[AudioChunk, None]:
+        assert self._input_filter is not None
+        async with aclosing(self._backend.capture()) as capture:
+            async for chunk in capture:
+                filtered = await self._input_filter.filter(chunk)
+                if self._closed:
+                    return
+                if filtered is not None:
+                    yield filtered
 
     async def write(self, chunk: AudioChunk) -> None:
         """Play one PCM chunk."""
@@ -161,9 +200,20 @@ class LocalAudio:
         await self._backend.wait_for_playback()
 
     async def close(self) -> None:
-        """Close the active local audio backend."""
+        """Close the backend and release input-filter resources."""
 
-        await self._backend.close()
+        async with self._lifecycle_lock:
+            self._closed = True
+            self._started = False
+            try:
+                await self._backend.close()
+            finally:
+                await self._close_filter()
+
+    async def _close_filter(self) -> None:
+        if self._input_filter is not None and self._filter_started:
+            await self._input_filter.close()
+            self._filter_started = False
 
     def _new_portaudio_backend(self) -> PortAudioBackend:
         settings = self._portaudio_settings

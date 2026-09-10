@@ -30,11 +30,16 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio :: Speech",
 ]
 dependencies = [
+    # pyrnnoise 0.4.x uses audiolab's pre-0.5 Graph API and PyAV's older abuffer API.
+    "audiolab>=0.4.9,<0.5",
+    "av>=17.0,<17.1",
     "bumblehive>=0.3.0,<3",
     "numpy>=1.26.4,<3",
     "onnxruntime~=1.24.3",
+    "pyrnnoise~=0.4.3",
     "sherpa-onnx==1.13.4",
     "sounddevice>=0.5.3,<0.6",
+    "soxr~=1.1.0",
     "websockets>=15,<18",
 ]
 

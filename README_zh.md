@@ -31,6 +31,7 @@ Python SDK 采用模块化设计，音频、ASR、VAD、Agent、TTS 和回合检
 
 - 支持自然打断的全双工实时语音会话。
 - 基于 macOS VoiceProcessingIO 的原生音频与回声消除。
+- 支持 RNNoise 输入降噪。
 - Silero VAD、自适应输入门控和 Smart Turn 语义回合检测。
 - 本地 ASR 与可替换的云服务语音识别实现。
 - 基于 Bumblehive 的 Agent Runtime、流式事件与工具执行。

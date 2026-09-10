@@ -10,6 +10,7 @@ import lalk.audio.local as local_module
 from lalk.audio import (
     AudioChunk,
     AudioDeviceError,
+    AudioError,
     AudioFormat,
     AudioFormatError,
     AudioIO,
@@ -212,6 +213,99 @@ async def test_local_audio_implements_audio_io(
 
     assert fake_sounddevice.input_streams[0].start_calls == 1
     assert fake_sounddevice.output_streams[0].start_calls == 1
+
+
+class _FakeInputFilter:
+    def __init__(self, *, fail_start: bool = False) -> None:
+        self.formats: list[AudioFormat] = []
+        self.chunks: list[AudioChunk] = []
+        self.close_calls = 0
+        self.fail_start = fail_start
+
+    async def start(self, audio_format: AudioFormat) -> None:
+        self.formats.append(audio_format)
+        if self.fail_start:
+            raise AudioError("filter initialization failed")
+
+    async def filter(self, chunk: AudioChunk) -> AudioChunk | None:
+        self.chunks.append(chunk)
+        if len(self.chunks) == 1:
+            return None
+        return AudioChunk(_pcm(30, 9), chunk.format)
+
+    async def close(self) -> None:
+        self.close_calls += 1
+
+
+async def test_input_filter_processes_capture_only(
+    fake_sounddevice: _FakeSoundDevice,
+) -> None:
+    input_filter = _FakeInputFilter()
+    audio = _audio(input_filter=input_filter)
+    await audio.start()
+    await audio.start()
+    capture = audio.capture()
+    for value in (1, 2):
+        fake_sounddevice.input_streams[0].emit(_pcm(20, value))
+    result = await anext(capture)
+    assert result == AudioChunk(_pcm(30, 9), audio.input_format)
+    assert [chunk.data for chunk in input_filter.chunks] == [_pcm(20, 1), _pcm(20, 2)]
+    assert input_filter.formats == [audio.input_format]
+
+    await audio.write(AudioChunk(_pcm(20, 4), audio.output_format))
+    assert fake_sounddevice.output_streams[0].writes == [_pcm(20, 4)]
+    await capture.aclose()
+    # Closing the wrapper must release the backend's single-consumer slot.
+    second_capture = audio.capture()
+    fake_sounddevice.input_streams[0].emit(_pcm(20, 3))
+    assert await anext(second_capture) is not None
+    await second_capture.aclose()
+    await audio.close()
+    await audio.close()
+    assert input_filter.close_calls == 1
+
+
+async def test_filter_start_failure_does_not_open_devices(
+    fake_sounddevice: _FakeSoundDevice,
+) -> None:
+    input_filter = _FakeInputFilter(fail_start=True)
+    audio = _audio(input_filter=input_filter)
+    with pytest.raises(AudioError, match="filter initialization"):
+        await audio.start()
+    assert not fake_sounddevice.input_streams
+    await audio.close()
+    assert input_filter.close_calls == 1
+
+
+async def test_backend_start_failure_closes_filter(
+    fake_sounddevice: _FakeSoundDevice,
+) -> None:
+    input_filter = _FakeInputFilter()
+    audio = _audio(input_filter=input_filter)
+    fake_sounddevice.fail_output_start = True
+    with pytest.raises(AudioDeviceError, match="Unable to start"):
+        await audio.start()
+    await audio.close()
+    assert input_filter.close_calls == 1
+
+
+async def test_backend_close_failure_still_closes_filter(
+    fake_sounddevice: _FakeSoundDevice,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    input_filter = _FakeInputFilter()
+    audio = _audio(input_filter=input_filter)
+    await audio.start()
+    original_close = audio._backend.close
+
+    async def failed_close() -> None:
+        await original_close()
+        raise AudioDeviceError("close failed")
+
+    monkeypatch.setattr(audio._backend, "close", failed_close)
+    with pytest.raises(AudioDeviceError, match="close failed"):
+        await audio.close()
+    assert input_filter.close_calls == 1
 
 
 @pytest.mark.parametrize(

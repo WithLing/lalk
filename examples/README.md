@@ -35,3 +35,6 @@ Cloud examples read credentials from environment variables:
 9. `python examples/voice_conversation.py` — run the complete interruptible voice loop.
 
 Continuous examples stop cleanly with `Ctrl+C`.
+
+The voice conversation example enables RNNoise with
+`LocalAudio(input_filter=RNNoiseFilter())`; use `LocalAudio()` to disable it.

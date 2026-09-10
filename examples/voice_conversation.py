@@ -10,6 +10,7 @@ from lalk import VoiceSession
 from lalk.agent import VOICE_AGENT_INSTRUCTIONS, BumblehiveAgent
 from lalk.asr import SenseVoiceASR
 from lalk.audio import LocalAudio
+from lalk.audio.filters import RNNoiseFilter
 from lalk.tts import VolcengineTTS
 from lalk.turn_detection import SmartTurnV3
 from lalk.vad import AdaptiveInputLevelGate, SileroVAD
@@ -17,7 +18,7 @@ from lalk.vad import AdaptiveInputLevelGate, SileroVAD
 
 async def main() -> None:
     session = VoiceSession(
-        audio=LocalAudio(),
+        audio=LocalAudio(input_filter=RNNoiseFilter()),
         vad=SileroVAD(),
         turn_analyzer=SmartTurnV3(),
         asr=SenseVoiceASR(model_dir=sensevoice_model_dir()),
