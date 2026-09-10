@@ -2,16 +2,14 @@
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
+import soxr
+from pyrnnoise import RNNoise
 
 from ..errors import AudioError, AudioFormatError, AudioStateError
 from ..types import AudioChunk, AudioFormat
-
-if TYPE_CHECKING:
-    import soxr
-    from pyrnnoise import RNNoise
 
 _RNNOISE_RATE = 48_000
 
@@ -94,9 +92,6 @@ class RNNoiseFilter:
 
     def _initialize(self, audio_format: AudioFormat) -> None:
         try:
-            import soxr
-            from pyrnnoise import RNNoise
-
             self._rnnoise = RNNoise(sample_rate=_RNNOISE_RATE)
             # Warm up lazy model and frame-graph initialization before capture.
             list(self._rnnoise.denoise_chunk(np.zeros(480, dtype=np.int16)))
