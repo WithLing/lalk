@@ -10,7 +10,7 @@ import bumblehive
 
 from lalk import ConversationInactivityPolicy, InactivityAction, VoiceSession
 from lalk.agent import BumblehiveAgent
-from lalk.asr import QwenAudioASR
+from lalk.asr import QwenAudioASR, VolcengineASR
 from lalk.audio import LocalAudio
 from lalk.audio.filters import RNNoiseFilter
 from lalk.observability import (
@@ -21,7 +21,7 @@ from lalk.observability import (
     VoiceEvent,
     VoiceObserver,
 )
-from lalk.tts import VolcengineTTS
+from lalk.tts import TTS, QwenAudioTTS, VolcengineTTS
 from lalk.turn_detection import SmartTurnV3
 from lalk.vad import AdaptiveInputLevelGate, SileroVAD
 
@@ -49,6 +49,25 @@ class CommandError(Exception):
         self.code = code
 
 
+def build_tts(config: AppConfig) -> TTS:
+    """Construct the selected speech synthesis provider."""
+    if config.tts.provider == "qwen_audio":
+        settings = config.tts.settings
+        return QwenAudioTTS(
+            api_key=settings.api_key,
+            workspace_id=settings.workspace_id or None,
+            voice=settings.voice,
+            sample_rate=settings.sample_rate,
+        )
+    settings = config.tts.settings
+    return VolcengineTTS(
+        api_key=settings.api_key,
+        voice=settings.voice,
+        resource_id=settings.resource_id,
+        sample_rate=settings.sample_rate,
+    )
+
+
 def build_session(
     config: AppConfig,
     observer: VoiceObserver,
@@ -57,18 +76,21 @@ def build_session(
 ) -> VoiceSession:
     """Construct the concrete Lalk session described by the config."""
 
-    tts_settings = config.tts.settings
-    tts = VolcengineTTS(
-        api_key=tts_settings.api_key,
-        voice=tts_settings.voice,
-        resource_id=tts_settings.resource_id,
-        sample_rate=tts_settings.sample_rate,
-    )
+    tts = build_tts(config)
     audio_config = config.audio
     vad_config = config.vad
     turn_detection_config = config.turn_detection
     interruption_config = config.interruption
-    asr_settings = config.asr.settings
+    if config.asr.provider == "volcengine":
+        asr = VolcengineASR(
+            api_key=config.asr.settings.api_key,
+            resource_id=config.asr.settings.resource_id,
+        )
+    else:
+        asr = QwenAudioASR(
+            api_key=config.asr.settings.api_key,
+            workspace_id=config.asr.settings.workspace_id,
+        )
     inactivity_config = config.inactivity_policy
     agent_config = bumblehive.BumblehiveConfig.from_mapping(config.bumblehive)
     if agent_config.agent.tool_names is not None:
@@ -119,10 +141,7 @@ def build_session(
             interruption_config.backchannel_filter_enabled
         ),
         backchannel_phrases=interruption_config.backchannel_phrases,
-        asr=QwenAudioASR(
-            api_key=asr_settings.api_key,
-            workspace_id=asr_settings.workspace_id,
-        ),
+        asr=asr,
         agent=agent,
         tts=tts,
         history=history,

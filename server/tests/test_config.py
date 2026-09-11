@@ -10,6 +10,21 @@ from lalk_server.config import (
 
 
 @pytest.mark.asyncio
+async def test_volcengine_asr_round_trip(tmp_path, config_data):
+    config_data["asr"] = {
+        "provider": "volcengine", "settings": {"api_key": "seed-key"},
+    }
+    config = AppConfig.model_validate(config_data)
+    assert config.asr.settings.resource_id == "volc.seedasr.sauc.duration"
+    path = tmp_path / "config.json"
+    await save_config(path, config)
+    assert load_config(path) == config
+    config_data["asr"]["settings"]["workspace_id"] = "wrong-provider-field"
+    with pytest.raises(ValueError):
+        AppConfig.model_validate(config_data)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("send_audio_to_llm", [False, True])
 async def test_config_round_trip_preserves_api_keys(
     tmp_path: Path,

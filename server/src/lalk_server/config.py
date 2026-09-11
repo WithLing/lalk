@@ -50,6 +50,16 @@ class QwenAudioASRConfig(_ConfigModel):
     settings: QwenAudioASRSettings
 
 
+class VolcengineASRSettings(_ConfigModel):
+    api_key: str = Field(min_length=1)
+    resource_id: str = Field(default="volc.seedasr.sauc.duration", min_length=1)
+
+
+class VolcengineASRConfig(_ConfigModel):
+    provider: Literal["volcengine"]
+    settings: VolcengineASRSettings
+
+
 class VolcengineTTSSettings(_ConfigModel):
     api_key: str = Field(min_length=1)
     voice: str = "zh_female_vv_uranus_bigtts"
@@ -60,6 +70,19 @@ class VolcengineTTSSettings(_ConfigModel):
 class VolcengineTTSConfig(_ConfigModel):
     provider: Literal["volcengine"]
     settings: VolcengineTTSSettings
+
+
+class QwenAudioTTSSettings(_ConfigModel):
+    api_key: str = Field(min_length=1)
+    workspace_id: str = ""
+    voice: str = Field(default="longanhuan_v3.6", min_length=1)
+    voice_kind: Literal["platform", "clone"] = "platform"
+    sample_rate: Literal[8000, 16000, 22050, 24000, 44100, 48000] = 48000
+
+
+class QwenAudioTTSConfig(_ConfigModel):
+    provider: Literal["qwen_audio"]
+    settings: QwenAudioTTSSettings
 
 
 class ConversationInactivityConfig(_ConfigModel):
@@ -73,12 +96,12 @@ class AppConfig(_ConfigModel):
     vad: VADConfig = Field(default_factory=VADConfig)
     turn_detection: TurnDetectionConfig = Field(default_factory=TurnDetectionConfig)
     interruption: InterruptionConfig = Field(default_factory=InterruptionConfig)
-    asr: QwenAudioASRConfig
+    asr: QwenAudioASRConfig | VolcengineASRConfig = Field(discriminator="provider")
     bumblehive: dict[str, Any]
     personalization_enabled: bool = Field(default=False, strict=True)
     opening_enabled: bool = Field(default=False, strict=True)
     send_audio_to_llm: bool = Field(default=False, strict=True)
-    tts: VolcengineTTSConfig
+    tts: VolcengineTTSConfig | QwenAudioTTSConfig = Field(discriminator="provider")
     inactivity_policy: ConversationInactivityConfig | None = None
 
     @model_validator(mode="before")

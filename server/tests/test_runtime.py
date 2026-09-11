@@ -119,6 +119,29 @@ def test_build_session_passes_audio_setting_to_sdk(
     assert session_factory.call_args.kwargs["send_audio_to_llm"] is enabled
 
 
+@pytest.mark.parametrize("provider", ["qwen_audio", "volcengine"])
+def test_build_session_selects_asr(provider, app_config, tmp_path, monkeypatch):
+    data = app_config.model_dump()
+    data["asr"] = {
+        "provider": provider,
+        "settings": {"api_key": "selected-key"},
+    }
+    runtime = RuntimeController(tmp_path / "config.json")
+    factory = Mock(wraps=runtime_module.VoiceSession)
+    monkeypatch.setattr(runtime_module, "VoiceSession", factory)
+    runtime_module.build_session(
+        AppConfig.model_validate(data), runtime,
+        bumblehive.MessageHistory(), runtime.proactive,
+    )
+    asr = factory.call_args.kwargs["asr"]
+    expected = (
+        runtime_module.VolcengineASR if provider == "volcengine"
+        else runtime_module.QwenAudioASR
+    )
+    assert isinstance(asr, expected)
+    assert asr._api_key == "selected-key"
+
+
 @pytest.mark.parametrize("enabled", [False, True])
 def test_build_session_configures_input_noise_filter(
     app_config: AppConfig,
