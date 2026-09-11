@@ -3,10 +3,6 @@
 import argparse
 from pathlib import Path
 
-import uvicorn
-
-from .app import create_app
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Lalk local server")
@@ -26,6 +22,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    import uvicorn
+
+    from .app import create_app
+
     uvicorn.run(
         create_app(config_path=args.config),
         host="127.0.0.1",
