@@ -178,6 +178,19 @@ button.generation-setting-row:focus-visible { outline: 3px solid rgb(0 113 227 /
 .configuration-actions button:disabled,
 .service-form footer button:disabled { cursor: default; opacity: .4; }
 .tts-setup { display: grid; min-height: 350px; grid-template-columns: 280px minmax(0, 1fr); overflow: hidden; border: 1px solid var(--config-line); border-radius: 20px; background: #fff; }
+.asr-setup { min-height: 0; }
+.asr-model { display: grid; gap: 10px; }
+.asr-model > span { font-size: 12px; font-weight: 600; }
+.asr-model > strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.asr-advanced summary { cursor: pointer; color: var(--config-secondary); font-size: 12px; }
+.asr-advanced label { margin-top: 16px; }
+.asr-advanced > p { margin: 8px 0 0; color: var(--config-secondary); font-size: 12px; line-height: 1.5; }
+.asr-session-notice { color: var(--config-secondary); font-size: 12px; }
+.asr-setup .service-option:disabled { cursor: default; transform: none; opacity: .65; }
+@media (max-width: 760px) {
+  .asr-setup { grid-template-columns: minmax(0, 1fr); }
+  .asr-setup .service-picker { border-right: 0; border-bottom: 1px solid var(--config-line); }
+}
 .service-picker { padding: 20px; border-right: 1px solid var(--config-line); background: #fff; }
 .service-picker h3,
 .service-form h3 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
@@ -198,11 +211,10 @@ button.generation-setting-row:focus-visible { outline: 3px solid rgb(0 113 227 /
 .provider-fields { display: grid; gap: 14px; }
 .provider-fields input { height: 40px; border-radius: 11px; background: #fff; }
 .voice-kind-field { min-width: 0; margin: 0; padding: 0; border: 0; }
-.voice-kind-field legend { margin-bottom: 7px; color: var(--config-text); font-size: 11px; font-weight: 650; }
-.voice-kind-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: #f0f1f4; }
-.voice-kind-picker button { min-height: 38px; border-radius: 9px; background: transparent; color: var(--config-secondary); font-size: 11px; font-weight: 650; transition: .18s ease; }
+.voice-kind-picker { display: flex; justify-content: flex-start; gap: 24px; }
+.voice-kind-picker button { min-height: 38px; padding: 0 0 9px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--config-secondary); font-size: 12px; font-weight: 650; transition: color .18s ease, border-color .18s ease; }
 .voice-kind-picker button:hover { color: var(--config-text); }
-.voice-kind-picker button.selected { background: #fff; color: var(--config-text); box-shadow: 0 1px 5px rgb(0 0 0 / 10%); }
+.voice-kind-picker button.selected { color: var(--config-blue); border-bottom-color: var(--config-blue); }
 .voice-field-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .voice-field-title a { color: var(--config-blue); font-size: 10px; font-weight: 650; text-decoration: none; }
 .voice-field-title a:hover { text-decoration: underline; }

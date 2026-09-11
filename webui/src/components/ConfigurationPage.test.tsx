@@ -84,8 +84,9 @@ describe("ConfigurationPage navigation", () => {
       />,
     );
 
-    expect(markup).toContain("Workspace ID（选填）");
-    expect(markup).toContain("不填时使用阿里云公共接口");
+    expect(markup).toContain("Workspace ID");
+    expect(markup).toContain("留空使用公共接口");
+    expect(markup).toContain("留空时使用阿里云公共接口。");
   });
 
   it.each([false, true])("restores audio understanding as %s", async (enabled) => {

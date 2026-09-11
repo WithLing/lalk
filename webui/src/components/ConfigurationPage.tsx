@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import volcengineLogo from "../assets/volcengine-logo.png";
+import aliyunLogo from "../assets/aliyun-logo.png";
+import { ttsConfig, ttsDrafts, type TTSDraft, type TTSProvider } from "./configuration/tts";
 import { getModels } from "../api/http";
 import type { AppConfig } from "../runtime/contracts";
 import { ConfigurationHeader } from "./configuration/ConfigurationHeader";
+import { ASRConfiguration, asrDrafts, buildASRConfig, type ASRProvider } from "./configuration/ASRConfiguration";
 import {
   asObject,
   asText,
@@ -12,10 +15,7 @@ import {
   generationControlsFromConfig,
   mergeAgentPersonalization,
   mergeGenerationConfig,
-  resourceIdForVoiceKind,
   type VoiceKind,
-  voiceIdsFromSavedConfig,
-  voiceKindFromResourceId,
 } from "./configuration/model";
 
 type Step = "asr" | "agent" | "tts";
@@ -64,10 +64,8 @@ export function ConfigurationPage({
   const [agentBaseUrl, setAgentBaseUrl] = useState(asText(providerConfig.base_url));
   const [agentModel, setAgentModel] = useState(asText(providerConfig.model));
   const [agentApiKey, setAgentApiKey] = useState(asText(providerConfig.api_key));
-  const [asrApiKey, setAsrApiKey] = useState(base.asr.settings.api_key);
-  const [asrWorkspaceId, setAsrWorkspaceId] = useState(
-    base.asr.settings.workspace_id,
-  );
+  const [asrProvider, setAsrProvider] = useState<ASRProvider>(base.asr.provider);
+  const [asrSettings, setAsrSettings] = useState(() => asrDrafts(base.asr));
   const [thinkingEnabled, setThinkingEnabled] = useState(
     initialGeneration.thinkingEnabled,
   );
@@ -102,23 +100,16 @@ export function ConfigurationPage({
   >(
     base.inactivity_policy?.on_exhausted ?? "wait",
   );
-  const [ttsSelected, setTtsSelected] = useState(config?.tts.provider === "volcengine");
-  const [ttsApiKey, setTtsApiKey] = useState(base.tts.settings.api_key);
-  const [voiceKind, setVoiceKind] = useState<VoiceKind>(() =>
-    voiceKindFromResourceId(base.tts.settings.resource_id),
-  );
-  const [platformVoiceId, setPlatformVoiceId] = useState(() =>
-    voiceIdsFromSavedConfig(
-      base.tts.settings.voice,
-      base.tts.settings.resource_id,
-    ).platform,
-  );
-  const [cloneVoiceId, setCloneVoiceId] = useState(() =>
-    voiceIdsFromSavedConfig(
-      base.tts.settings.voice,
-      base.tts.settings.resource_id,
-    ).clone,
-  );
+  const [ttsSelected, setTtsSelected] = useState(Boolean(config));
+  const [ttsProvider, setTtsProvider] = useState<TTSProvider>(base.tts.provider);
+  const [ttsForms, setTtsForms] = useState(() => ttsDrafts(base.tts));
+  const ttsForm = ttsForms[ttsProvider];
+  const { apiKey: ttsApiKey, voiceKind, platformVoiceId, cloneVoiceId } = ttsForm;
+  const updateTts = (patch: Partial<TTSDraft>) => setTtsForms((previous) => ({ ...previous, [ttsProvider]: { ...previous[ttsProvider], ...patch } }));
+  const setTtsApiKey = (apiKey: string) => updateTts({ apiKey });
+  const setVoiceKind = (kind: VoiceKind) => updateTts({ voiceKind: kind });
+  const setPlatformVoiceId = (value: string) => updateTts({ platformVoiceId: value });
+  const setCloneVoiceId = (value: string) => updateTts({ cloneVoiceId: value });
   const [error, setError] = useState(readableLoadError(loadError));
   const [dirty, setDirty] = useState(false);
   const [leaveConfirmationOpen, setLeaveConfirmationOpen] = useState(false);
@@ -127,7 +118,7 @@ export function ConfigurationPage({
   const agentReady = Boolean(
     agentBaseUrl.trim() && agentModel.trim() && agentApiKey.trim(),
   );
-  const asrReady = Boolean(asrApiKey.trim());
+  const asrReady = Boolean(asrSettings[asrProvider].api_key.trim());
   const voiceId = voiceKind === "clone" ? cloneVoiceId : platformVoiceId;
   const ttsReady = Boolean(ttsSelected && ttsApiKey.trim() && voiceId.trim());
   const followupTimeoutValue = Number(followupTimeout);
@@ -151,23 +142,14 @@ export function ConfigurationPage({
     const storedBaseUrl = asText(storedProvider.base_url);
     const storedModel = asText(storedProvider.model);
     const storedAgentApiKey = asText(storedProvider.api_key);
-    const storedTtsApiKey = stored.tts.settings.api_key;
-    const storedVoiceId = stored.tts.settings.voice;
-    const storedVoiceKind = voiceKindFromResourceId(
-      stored.tts.settings.resource_id,
-    );
-    const storedVoiceIds = voiceIdsFromSavedConfig(
-      storedVoiceId,
-      stored.tts.settings.resource_id,
-    );
 
     setInstructions(asText(storedAgent.instructions));
     setRows(createContextRows(asObject(storedAgent.dynamic_context)));
     setAgentBaseUrl(storedBaseUrl);
     setAgentModel(storedModel);
     setAgentApiKey(storedAgentApiKey);
-    setAsrApiKey(stored.asr.settings.api_key);
-    setAsrWorkspaceId(stored.asr.settings.workspace_id);
+    setAsrProvider(stored.asr.provider);
+    setAsrSettings(asrDrafts(stored.asr));
     setThinkingEnabled(storedGeneration.thinkingEnabled);
     setSendAudioToLlm(stored.send_audio_to_llm);
     setReasoningEffort(storedGeneration.reasoningEffort);
@@ -185,11 +167,9 @@ export function ConfigurationPage({
       String(stored.inactivity_policy?.max_followups ?? 3),
     );
     setExhaustedAction(stored.inactivity_policy?.on_exhausted ?? "wait");
-    setTtsSelected(stored.tts.provider === "volcengine");
-    setTtsApiKey(storedTtsApiKey);
-    setVoiceKind(storedVoiceKind);
-    setPlatformVoiceId(storedVoiceIds.platform);
-    setCloneVoiceId(storedVoiceIds.clone);
+    setTtsSelected(true);
+    setTtsProvider(stored.tts.provider);
+    setTtsForms(ttsDrafts(stored.tts));
     setDirty(false);
     setLeaveConfirmationOpen(false);
   }, [config]);
@@ -331,13 +311,7 @@ export function ConfigurationPage({
         ...base.audio,
         noise_suppression: noiseSuppression,
       },
-      asr: {
-        provider: "qwen_audio",
-        settings: {
-          api_key: asrApiKey.trim(),
-          workspace_id: asrWorkspaceId.trim(),
-        },
-      },
+      asr: buildASRConfig(asrProvider, asrSettings),
       bumblehive: {
         ...base.bumblehive,
         provider: {
@@ -365,15 +339,7 @@ export function ConfigurationPage({
         ...base.interruption,
         backchannel_filter_enabled: backchannelFilterEnabled,
       },
-      tts: {
-        provider: "volcengine",
-        settings: {
-          ...base.tts.settings,
-          api_key: ttsApiKey.trim(),
-          voice: voiceId.trim(),
-          resource_id: resourceIdForVoiceKind(voiceKind),
-        },
-      },
+      tts: ttsConfig(ttsProvider, ttsForm),
       inactivity_policy: followupEnabled
         ? {
             timeout_seconds: followupTimeoutValue,
@@ -479,48 +445,23 @@ export function ConfigurationPage({
           </nav>
 
           {step === "asr" && (
-            <section className="configuration-panel agent-panel">
+            <section className="configuration-panel">
               <div className="configuration-body">
-                <div className="agent-layout">
-                  <article className="configuration-card connection-card">
-                    <header className="connection-card-header">
-                      <div>
-                        <h3>Qwen Audio</h3>
-                        <p>使用阿里云实时语音识别，音频会在说话过程中持续上传。</p>
-                      </div>
-                      <span>Streaming ASR</span>
-                    </header>
-                    <div className="connection-fields">
-                      <label>
-                        <span><strong>API Key</strong><small>模型服务访问密钥</small></span>
-                        <input
-                          type="password"
-                          value={asrApiKey}
-                          placeholder="填写 Qwen Audio API Key"
-                          onChange={(event) => { setAsrApiKey(event.target.value); markDirty(); }}
-                        />
-                      </label>
-                      <label>
-                        <span><strong>Workspace ID（选填）</strong><small>不填时使用阿里云公共接口</small></span>
-                        <input
-                          value={asrWorkspaceId}
-                          placeholder="选填 Workspace ID"
-                          onChange={(event) => { setAsrWorkspaceId(event.target.value); markDirty(); }}
-                        />
-                      </label>
-                      <label>
-                        <span><strong>模型</strong><small>当前使用的实时识别模型</small></span>
-                        <input value="qwen-audio-3.0-asr-flash-streaming" readOnly />
-                      </label>
-                    </div>
-                  </article>
-                </div>
-                <PageActions
-                  disabled={active || saveState === "saving" || (savedConfig && !dirty)}
-                  label={saveButtonLabel}
-                  status={saveStatus}
-                  onClick={() => void save()}
-                />
+                <ASRConfiguration
+                  provider={asrProvider}
+                  drafts={asrSettings}
+                  disabled={active}
+                  onProviderChange={(provider) => { setAsrProvider(provider); markDirty(); }}
+                  onChange={(drafts) => { setAsrSettings(drafts); markDirty(); }}
+                >
+                  <footer>
+                    <span>{saveStatus}</span>
+                    <button type="button"
+                      disabled={active || saveState === "saving" || (savedConfig && !dirty)}
+                      onClick={() => void save()}>{saveButtonLabel}</button>
+                  </footer>
+                </ASRConfiguration>
+                {error && <p className="configuration-error">{error}</p>}
               </div>
             </section>
           )}
@@ -801,7 +742,10 @@ export function ConfigurationPage({
                 <div className="tts-setup">
                   <aside className="service-picker">
                     <h3>语音服务</h3>
-                    <button className={`service-option ${ttsSelected ? "selected" : ""}`} type="button" onClick={() => { setTtsSelected(true); markDirty(); }}>
+                    <button className={`service-option ${ttsSelected && ttsProvider === "qwen_audio" ? "selected" : ""}`} type="button" onClick={() => { setTtsSelected(true); setTtsProvider("qwen_audio"); markDirty(); }}>
+                      <img src={aliyunLogo} alt="" aria-hidden="true" /><span><strong>阿里云语音</strong></span><b>✓</b>
+                    </button>
+                    <button className={`service-option ${ttsSelected && ttsProvider === "volcengine" ? "selected" : ""}`} type="button" onClick={() => { setTtsSelected(true); setTtsProvider("volcengine"); markDirty(); }}>
                       <img src={volcengineLogo} alt="" aria-hidden="true" /><span><strong>火山引擎语音</strong></span><b>✓</b>
                     </button>
                   </aside>
@@ -812,9 +756,9 @@ export function ConfigurationPage({
                       <div className="service-form">
                         <header><h3>连接与音色</h3></header>
                         <div className="provider-fields">
-                          <label><span>API Key</span><input type="password" value={ttsApiKey} placeholder="填写火山引擎 API Key" onChange={(event) => { setTtsApiKey(event.target.value); markDirty(); }} /></label>
-                          <fieldset className="voice-kind-field">
-                            <legend>音色类型</legend>
+                          <label><span>API Key</span><input type="password" value={ttsApiKey} placeholder={ttsProvider === "qwen_audio" ? "填写阿里云 API Key" : "填写火山引擎 API Key"} onChange={(event) => { setTtsApiKey(event.target.value); markDirty(); }} /></label>
+                          {ttsProvider === "qwen_audio" && <label><span>Workspace ID（可选）</span><input value={ttsForm.workspaceId} placeholder="不填则使用公共端点" onChange={(event) => { updateTts({ workspaceId: event.target.value }); markDirty(); }} /></label>}
+                          <fieldset className="voice-kind-field" aria-label="音色类型">
                             <div className="voice-kind-picker">
                               <button
                                 className={voiceKind === "platform" ? "selected" : ""}
@@ -830,14 +774,14 @@ export function ConfigurationPage({
                                 aria-pressed={voiceKind === "clone"}
                                 onClick={() => { setVoiceKind("clone"); markDirty(); }}
                               >
-                                我的克隆音色
+                                克隆音色
                               </button>
                             </div>
                           </fieldset>
                           <label>
                             <span className="voice-field-title">
                               <span>音色 ID</span>
-                              {voiceKind === "platform" && (
+                              {voiceKind === "platform" && ttsProvider === "volcengine" && (
                                 <a href={VOICE_LIBRARY_URL} target="_blank" rel="noreferrer" onClick={(event) => { if (!("__TAURI_INTERNALS__" in window)) return; event.preventDefault(); void openUrl(VOICE_LIBRARY_URL).catch(() => setError("无法打开音色库，请稍后重试。")); }}>
                                   前往平台音色库 ↗
                                 </a>

@@ -229,6 +229,12 @@ export interface AppConfig {
       api_key: string;
       workspace_id: string;
     };
+  } | {
+    provider: "volcengine";
+    settings: {
+      api_key: string;
+      resource_id: string;
+    };
   };
   bumblehive: Record<string, unknown>;
   personalization_enabled: boolean;
@@ -241,6 +247,15 @@ export interface AppConfig {
       voice: string;
       resource_id: string;
       sample_rate: 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
+    };
+  } | {
+    provider: "qwen_audio";
+    settings: {
+      api_key: string;
+      workspace_id: string;
+      voice: string;
+      voice_kind: "platform" | "clone";
+      sample_rate: 8000 | 16000 | 22050 | 24000 | 44100 | 48000;
     };
   };
   inactivity_policy: {
