@@ -114,6 +114,8 @@ def main() -> None:
         "numpy",
         "--collect-binaries",
         "pyrnnoise",
+        "--collect-data",
+        "audiolab",
         "--collect-submodules",
         "bumblehive",
         "--collect-data",
@@ -148,6 +150,9 @@ def main() -> None:
     executable = output_dir / binary_name / binary_name
     if not executable.is_file():
         raise RuntimeError(f"Sidecar output missing: {executable}")
+    subprocess.run(
+        [str(executable), "--help"], check=True, timeout=60, stdout=subprocess.DEVNULL
+    )
     print(f"Sidecar ready: {executable}")
 
 
