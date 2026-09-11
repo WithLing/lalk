@@ -16,7 +16,7 @@ Cloud examples read credentials from environment variables:
 | `BUMBLEHIVE_API_KEY` | Bumblehive Agent | Yes |
 | `BUMBLEHIVE_MODEL` | Bumblehive Agent model | No; defaults to `deepseek-chat` |
 | `BUMBLEHIVE_BASE_URL` | Bumblehive Agent endpoint | No; defaults to DeepSeek |
-| `VOLCENGINE_API_KEY` | Volcengine TTS | Yes |
+| `VOLCENGINE_API_KEY` | Volcengine TTS and ASR | Yes |
 | `VOLCENGINE_SPEAKER` | Volcengine voice | No |
 | `VOLCENGINE_RESOURCE_ID` | Volcengine resource | No |
 | `DASHSCOPE_API_KEY` | Qwen Audio ASR | Yes |
@@ -35,6 +35,10 @@ Cloud examples read credentials from environment variables:
 9. `python examples/voice_conversation.py` — run the complete interruptible voice loop.
 
 Continuous examples stop cleanly with `Ctrl+C`.
+
+Run `python examples/volcengine_asr.py` for Seed ASR live transcription.
+It uses `volc.seedasr.sauc.duration` and accepts 16 kHz mono PCM.
+To use another ASR billing resource, pass `resource_id` to `VolcengineASR`.
 
 The voice conversation example enables RNNoise with
 `LocalAudio(input_filter=RNNoiseFilter())`; use `LocalAudio()` to disable it.

@@ -6,6 +6,7 @@ from .qwen_audio import QwenAudioASR
 from .segmenter import SpeechSegmenter
 from .sensevoice import SenseVoiceASR
 from .types import ASRResult, Transcript
+from .volcengine import VolcengineASR
 
 __all__ = [
     "ASR",
@@ -18,4 +19,5 @@ __all__ = [
     "SenseVoiceASR",
     "SpeechSegmenter",
     "Transcript",
+    "VolcengineASR",
 ]
