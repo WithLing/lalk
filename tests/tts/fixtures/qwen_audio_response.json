@@ -1,0 +1,872 @@
+[
+  {
+    "audio_bytes_before": 0,
+    "event": "task-started",
+    "payload": {}
+  },
+  {
+    "audio_bytes_before": 0,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-begin",
+        "original_text": "你好，欢迎使用语音助手。",
+        "normalized_text": "你好，欢迎使用语音助手。"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 0,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 36520,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 38400,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": [
+            {
+              "text": "你",
+              "begin_index": 0,
+              "end_index": 1,
+              "begin_time": 0,
+              "end_time": 248
+            },
+            {
+              "text": "好",
+              "begin_index": 1,
+              "end_index": 2,
+              "begin_time": 248,
+              "end_time": 496
+            },
+            {
+              "text": "，欢",
+              "begin_index": 2,
+              "end_index": 3,
+              "begin_time": 496,
+              "end_time": 744
+            },
+            {
+              "text": "迎",
+              "begin_index": 3,
+              "end_index": 4,
+              "begin_time": 744,
+              "end_time": 992
+            },
+            {
+              "text": "使",
+              "begin_index": 4,
+              "end_index": 5,
+              "begin_time": 992,
+              "end_time": 1240
+            },
+            {
+              "text": "用",
+              "begin_index": 5,
+              "end_index": 6,
+              "begin_time": 1240,
+              "end_time": 1488
+            },
+            {
+              "text": "语",
+              "begin_index": 6,
+              "end_index": 7,
+              "begin_time": 1488,
+              "end_time": 1736
+            },
+            {
+              "text": "音",
+              "begin_index": 7,
+              "end_index": 8,
+              "begin_time": 1736,
+              "end_time": 1984
+            },
+            {
+              "text": "助",
+              "begin_index": 8,
+              "end_index": 9,
+              "begin_time": 1984,
+              "end_time": 2232
+            },
+            {
+              "text": "手。",
+              "begin_index": 9,
+              "end_index": 10,
+              "begin_time": 2232,
+              "end_time": 2480
+            }
+          ]
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 37960,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 76360,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 46080,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 7560,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 0,
+          "words": [
+            {
+              "text": "你",
+              "begin_index": 0,
+              "end_index": 1,
+              "begin_time": 0,
+              "end_time": 248
+            },
+            {
+              "text": "好",
+              "begin_index": 1,
+              "end_index": 2,
+              "begin_time": 248,
+              "end_time": 496
+            },
+            {
+              "text": "，欢",
+              "begin_index": 2,
+              "end_index": 3,
+              "begin_time": 496,
+              "end_time": 744
+            },
+            {
+              "text": "迎",
+              "begin_index": 3,
+              "end_index": 4,
+              "begin_time": 744,
+              "end_time": 992
+            },
+            {
+              "text": "使",
+              "begin_index": 4,
+              "end_index": 5,
+              "begin_time": 992,
+              "end_time": 1240
+            },
+            {
+              "text": "用",
+              "begin_index": 5,
+              "end_index": 6,
+              "begin_time": 1240,
+              "end_time": 1488
+            },
+            {
+              "text": "语",
+              "begin_index": 6,
+              "end_index": 7,
+              "begin_time": 1488,
+              "end_time": 1736
+            },
+            {
+              "text": "音",
+              "begin_index": 7,
+              "end_index": 8,
+              "begin_time": 1736,
+              "end_time": 1984
+            },
+            {
+              "text": "助",
+              "begin_index": 8,
+              "end_index": 9,
+              "begin_time": 1984,
+              "end_time": 2232
+            },
+            {
+              "text": "手。",
+              "begin_index": 9,
+              "end_index": 10,
+              "begin_time": 2232,
+              "end_time": 2480
+            }
+          ]
+        },
+        "type": "sentence-end",
+        "original_text": "你好，欢迎使用语音助手。",
+        "normalized_text": "你好，欢迎使用语音助手。"
+      },
+      "usage": {
+        "characters": 22
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 0,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": [
+            {
+              "text": "今",
+              "begin_index": 10,
+              "end_index": 11,
+              "begin_time": 2610,
+              "end_time": 2770
+            },
+            {
+              "text": "天",
+              "begin_index": 11,
+              "end_index": 12,
+              "begin_time": 2770,
+              "end_time": 2850
+            },
+            {
+              "text": "天",
+              "begin_index": 12,
+              "end_index": 13,
+              "begin_time": 2850,
+              "end_time": 3090
+            },
+            {
+              "text": "气",
+              "begin_index": 13,
+              "end_index": 14,
+              "begin_time": 3090,
+              "end_time": 3250
+            },
+            {
+              "text": "不",
+              "begin_index": 14,
+              "end_index": 15,
+              "begin_time": 3250,
+              "end_time": 3330
+            },
+            {
+              "text": "错",
+              "begin_index": 15,
+              "end_index": 16,
+              "begin_time": 3330,
+              "end_time": 3570
+            },
+            {
+              "text": "，",
+              "begin_index": 16,
+              "end_index": 17,
+              "begin_time": 3570,
+              "end_time": 3730
+            },
+            {
+              "text": "我",
+              "begin_index": 17,
+              "end_index": 18,
+              "begin_time": 3730,
+              "end_time": 3970
+            },
+            {
+              "text": "们",
+              "begin_index": 18,
+              "end_index": 19,
+              "begin_time": 3970,
+              "end_time": 4130
+            },
+            {
+              "text": "一",
+              "begin_index": 19,
+              "end_index": 20,
+              "begin_time": 4130,
+              "end_time": 4210
+            },
+            {
+              "text": "起",
+              "begin_index": 20,
+              "end_index": 21,
+              "begin_time": 4210,
+              "end_time": 4290
+            }
+          ]
+        },
+        "type": "sentence-begin",
+        "original_text": "今天天气不错，我们一起出去走走吧。",
+        "normalized_text": "今天天气不错，我们一起出去走走吧。"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 0,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": [
+            {
+              "text": "今",
+              "begin_index": 10,
+              "end_index": 11,
+              "begin_time": 2610,
+              "end_time": 2770
+            },
+            {
+              "text": "天",
+              "begin_index": 11,
+              "end_index": 12,
+              "begin_time": 2770,
+              "end_time": 2850
+            },
+            {
+              "text": "天",
+              "begin_index": 12,
+              "end_index": 13,
+              "begin_time": 2850,
+              "end_time": 3090
+            },
+            {
+              "text": "气",
+              "begin_index": 13,
+              "end_index": 14,
+              "begin_time": 3090,
+              "end_time": 3250
+            },
+            {
+              "text": "不",
+              "begin_index": 14,
+              "end_index": 15,
+              "begin_time": 3250,
+              "end_time": 3330
+            },
+            {
+              "text": "错",
+              "begin_index": 15,
+              "end_index": 16,
+              "begin_time": 3330,
+              "end_time": 3570
+            },
+            {
+              "text": "，",
+              "begin_index": 16,
+              "end_index": 17,
+              "begin_time": 3570,
+              "end_time": 3730
+            },
+            {
+              "text": "我",
+              "begin_index": 17,
+              "end_index": 18,
+              "begin_time": 3730,
+              "end_time": 3970
+            },
+            {
+              "text": "们",
+              "begin_index": 18,
+              "end_index": 19,
+              "begin_time": 3970,
+              "end_time": 4130
+            },
+            {
+              "text": "一",
+              "begin_index": 19,
+              "end_index": 20,
+              "begin_time": 4130,
+              "end_time": 4210
+            },
+            {
+              "text": "起",
+              "begin_index": 20,
+              "end_index": 21,
+              "begin_time": 4210,
+              "end_time": 4290
+            }
+          ]
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 36520,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": [
+            {
+              "text": "今",
+              "begin_index": 10,
+              "end_index": 11,
+              "begin_time": 2610,
+              "end_time": 2770
+            },
+            {
+              "text": "天",
+              "begin_index": 11,
+              "end_index": 12,
+              "begin_time": 2770,
+              "end_time": 2850
+            },
+            {
+              "text": "天",
+              "begin_index": 12,
+              "end_index": 13,
+              "begin_time": 2850,
+              "end_time": 3090
+            },
+            {
+              "text": "气",
+              "begin_index": 13,
+              "end_index": 14,
+              "begin_time": 3090,
+              "end_time": 3250
+            },
+            {
+              "text": "不",
+              "begin_index": 14,
+              "end_index": 15,
+              "begin_time": 3250,
+              "end_time": 3330
+            },
+            {
+              "text": "错",
+              "begin_index": 15,
+              "end_index": 16,
+              "begin_time": 3330,
+              "end_time": 3570
+            },
+            {
+              "text": "，",
+              "begin_index": 16,
+              "end_index": 17,
+              "begin_time": 3570,
+              "end_time": 3730
+            },
+            {
+              "text": "我",
+              "begin_index": 17,
+              "end_index": 18,
+              "begin_time": 3730,
+              "end_time": 3970
+            },
+            {
+              "text": "们",
+              "begin_index": 18,
+              "end_index": 19,
+              "begin_time": 3970,
+              "end_time": 4130
+            },
+            {
+              "text": "一",
+              "begin_index": 19,
+              "end_index": 20,
+              "begin_time": 4130,
+              "end_time": 4210
+            },
+            {
+              "text": "起",
+              "begin_index": 20,
+              "end_index": 21,
+              "begin_time": 4210,
+              "end_time": 4290
+            },
+            {
+              "text": "出",
+              "begin_index": 21,
+              "end_index": 22,
+              "begin_time": 4290,
+              "end_time": 4530
+            },
+            {
+              "text": "去",
+              "begin_index": 22,
+              "end_index": 23,
+              "begin_time": 4530,
+              "end_time": 4610
+            },
+            {
+              "text": "走",
+              "begin_index": 23,
+              "end_index": 24,
+              "begin_time": 4610,
+              "end_time": 4770
+            }
+          ]
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 38400,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": [
+            {
+              "text": "今",
+              "begin_index": 10,
+              "end_index": 11,
+              "begin_time": 2610,
+              "end_time": 2770
+            },
+            {
+              "text": "天",
+              "begin_index": 11,
+              "end_index": 12,
+              "begin_time": 2770,
+              "end_time": 2850
+            },
+            {
+              "text": "天",
+              "begin_index": 12,
+              "end_index": 13,
+              "begin_time": 2850,
+              "end_time": 3090
+            },
+            {
+              "text": "气",
+              "begin_index": 13,
+              "end_index": 14,
+              "begin_time": 3090,
+              "end_time": 3250
+            },
+            {
+              "text": "不",
+              "begin_index": 14,
+              "end_index": 15,
+              "begin_time": 3250,
+              "end_time": 3330
+            },
+            {
+              "text": "错",
+              "begin_index": 15,
+              "end_index": 16,
+              "begin_time": 3330,
+              "end_time": 3570
+            },
+            {
+              "text": "，",
+              "begin_index": 16,
+              "end_index": 17,
+              "begin_time": 3570,
+              "end_time": 3730
+            },
+            {
+              "text": "我",
+              "begin_index": 17,
+              "end_index": 18,
+              "begin_time": 3730,
+              "end_time": 3970
+            },
+            {
+              "text": "们",
+              "begin_index": 18,
+              "end_index": 19,
+              "begin_time": 3970,
+              "end_time": 4130
+            },
+            {
+              "text": "一",
+              "begin_index": 19,
+              "end_index": 20,
+              "begin_time": 4130,
+              "end_time": 4210
+            },
+            {
+              "text": "起",
+              "begin_index": 20,
+              "end_index": 21,
+              "begin_time": 4210,
+              "end_time": 4290
+            },
+            {
+              "text": "出",
+              "begin_index": 21,
+              "end_index": 22,
+              "begin_time": 4290,
+              "end_time": 4530
+            },
+            {
+              "text": "去",
+              "begin_index": 22,
+              "end_index": 23,
+              "begin_time": 4530,
+              "end_time": 4610
+            },
+            {
+              "text": "走",
+              "begin_index": 23,
+              "end_index": 24,
+              "begin_time": 4610,
+              "end_time": 4770
+            },
+            {
+              "text": "走",
+              "begin_index": 24,
+              "end_index": 25,
+              "begin_time": 4770,
+              "end_time": 4930
+            },
+            {
+              "text": "吧。",
+              "begin_index": 25,
+              "end_index": 26,
+              "begin_time": 4930,
+              "end_time": 5170
+            }
+          ]
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 37960,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 76360,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 38400,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 37960,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": []
+        },
+        "type": "sentence-synthesis"
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 8000,
+    "event": "result-generated",
+    "payload": {
+      "output": {
+        "sentence": {
+          "index": 1,
+          "words": [
+            {
+              "text": "今",
+              "begin_index": 10,
+              "end_index": 11,
+              "begin_time": 2610,
+              "end_time": 2770
+            },
+            {
+              "text": "天",
+              "begin_index": 11,
+              "end_index": 12,
+              "begin_time": 2770,
+              "end_time": 2850
+            },
+            {
+              "text": "天",
+              "begin_index": 12,
+              "end_index": 13,
+              "begin_time": 2850,
+              "end_time": 3090
+            },
+            {
+              "text": "气",
+              "begin_index": 13,
+              "end_index": 14,
+              "begin_time": 3090,
+              "end_time": 3250
+            },
+            {
+              "text": "不",
+              "begin_index": 14,
+              "end_index": 15,
+              "begin_time": 3250,
+              "end_time": 3330
+            },
+            {
+              "text": "错",
+              "begin_index": 15,
+              "end_index": 16,
+              "begin_time": 3330,
+              "end_time": 3570
+            },
+            {
+              "text": "，",
+              "begin_index": 16,
+              "end_index": 17,
+              "begin_time": 3570,
+              "end_time": 3730
+            },
+            {
+              "text": "我",
+              "begin_index": 17,
+              "end_index": 18,
+              "begin_time": 3730,
+              "end_time": 3970
+            },
+            {
+              "text": "们",
+              "begin_index": 18,
+              "end_index": 19,
+              "begin_time": 3970,
+              "end_time": 4130
+            },
+            {
+              "text": "一",
+              "begin_index": 19,
+              "end_index": 20,
+              "begin_time": 4130,
+              "end_time": 4210
+            },
+            {
+              "text": "起",
+              "begin_index": 20,
+              "end_index": 21,
+              "begin_time": 4210,
+              "end_time": 4290
+            },
+            {
+              "text": "出",
+              "begin_index": 21,
+              "end_index": 22,
+              "begin_time": 4290,
+              "end_time": 4530
+            },
+            {
+              "text": "去",
+              "begin_index": 22,
+              "end_index": 23,
+              "begin_time": 4530,
+              "end_time": 4610
+            },
+            {
+              "text": "走",
+              "begin_index": 23,
+              "end_index": 24,
+              "begin_time": 4610,
+              "end_time": 4770
+            },
+            {
+              "text": "走",
+              "begin_index": 24,
+              "end_index": 25,
+              "begin_time": 4770,
+              "end_time": 4930
+            },
+            {
+              "text": "吧。",
+              "begin_index": 25,
+              "end_index": 26,
+              "begin_time": 4930,
+              "end_time": 5170
+            }
+          ]
+        },
+        "type": "sentence-end",
+        "original_text": "今天天气不错，我们一起出去走走吧。",
+        "normalized_text": "今天天气不错，我们一起出去走走吧。"
+      },
+      "usage": {
+        "characters": 54
+      }
+    }
+  },
+  {
+    "audio_bytes_before": 0,
+    "event": "task-finished",
+    "payload": {
+      "output": {}
+    }
+  }
+]

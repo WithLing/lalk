@@ -19,8 +19,9 @@ Cloud examples read credentials from environment variables:
 | `VOLCENGINE_API_KEY` | Volcengine TTS and ASR | Yes |
 | `VOLCENGINE_SPEAKER` | Volcengine voice | No |
 | `VOLCENGINE_RESOURCE_ID` | Volcengine resource | No |
-| `DASHSCOPE_API_KEY` | Qwen Audio ASR | Yes |
+| `DASHSCOPE_API_KEY` | Qwen Audio ASR and TTS | Yes |
 | `DASHSCOPE_WORKSPACE_ID` | Qwen workspace | No |
+| `DASHSCOPE_TTS_VOICE` | Qwen Audio TTS voice | No; defaults to `longanhuan_v3.6` |
 
 ## Suggested Order
 
@@ -39,6 +40,12 @@ Continuous examples stop cleanly with `Ctrl+C`.
 Run `python examples/volcengine_asr.py` for Seed ASR live transcription.
 It uses `volc.seedasr.sauc.duration` and accepts 16 kHz mono PCM.
 To use another ASR billing resource, pass `resource_id` to `VolcengineASR`.
+
+Run `python examples/qwen_audio_tts.py` to stream text to
+`qwen-audio-3.0-tts-flash`, print playback marks, and save 48 kHz mono PCM
+as `qwen_audio_tts.wav`. Omit `DASHSCOPE_WORKSPACE_ID` to use the public
+Beijing endpoint, or set it to use your workspace endpoint. A cloned voice
+bound to this model can also be passed through `DASHSCOPE_TTS_VOICE`.
 
 The voice conversation example enables RNNoise with
 `LocalAudio(input_filter=RNNoiseFilter())`; use `LocalAudio()` to disable it.
