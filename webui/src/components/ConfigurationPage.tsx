@@ -84,6 +84,7 @@ export function ConfigurationPage({
     base.personalization_enabled,
   );
   const [openingEnabled, setOpeningEnabled] = useState(base.opening_enabled);
+  const [noiseSuppression, setNoiseSuppression] = useState(base.audio.noise_suppression);
   const [backchannelFilterEnabled, setBackchannelFilterEnabled] = useState(
     base.interruption.backchannel_filter_enabled,
   );
@@ -172,6 +173,7 @@ export function ConfigurationPage({
     setReasoningEffort(storedGeneration.reasoningEffort);
     setPersonalizationEnabled(stored.personalization_enabled);
     setOpeningEnabled(stored.opening_enabled);
+    setNoiseSuppression(stored.audio.noise_suppression);
     setBackchannelFilterEnabled(
       stored.interruption.backchannel_filter_enabled,
     );
@@ -325,6 +327,10 @@ export function ConfigurationPage({
     );
     return {
       ...base,
+      audio: {
+        ...base.audio,
+        noise_suppression: noiseSuppression,
+      },
       asr: {
         provider: "qwen_audio",
         settings: {
@@ -648,6 +654,19 @@ export function ConfigurationPage({
                               <small>Agent 播放时，简短附和词不会中断播放</small>
                             </span>
                             <i className={`generation-switch ${backchannelFilterEnabled ? "enabled" : ""}`} aria-hidden="true"><b /></i>
+                          </button>
+                          <button
+                            className="generation-setting-row"
+                            type="button"
+                            role="switch"
+                            aria-checked={noiseSuppression}
+                            onClick={() => changeAgent(() => setNoiseSuppression((enabled) => !enabled))}
+                          >
+                            <span>
+                              <strong>增强降噪</strong>
+                              <small>降低麦克风中的背景噪声</small>
+                            </span>
+                            <i className={`generation-switch ${noiseSuppression ? "enabled" : ""}`} aria-hidden="true"><b /></i>
                           </button>
                           <button
                             className="generation-setting-row"

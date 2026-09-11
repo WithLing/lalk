@@ -25,6 +25,10 @@ describe("default model configuration", () => {
     expect(DEFAULT_CONFIG.send_audio_to_llm).toBe(false);
   });
 
+  it("keeps additional noise suppression disabled by default", () => {
+    expect(DEFAULT_CONFIG.audio.noise_suppression).toBe(false);
+  });
+
   it("keeps false-interruption filtering enabled by default", () => {
     expect(DEFAULT_CONFIG.interruption).toEqual({
       backchannel_filter_enabled: true,

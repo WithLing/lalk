@@ -35,6 +35,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     capture_buffer_ms: 500,
     latency: "low",
     echo_cancellation: "preferred",
+    noise_suppression: false,
   },
   vad: {
     threshold: 0.7,

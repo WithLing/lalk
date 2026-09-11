@@ -204,6 +204,7 @@ export interface AudioConfig {
   capture_buffer_ms: number;
   latency: number | "low" | "high";
   echo_cancellation: "disabled" | "preferred" | "required";
+  noise_suppression: boolean;
 }
 
 export interface AppConfig {

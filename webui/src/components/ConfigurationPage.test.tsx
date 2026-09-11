@@ -148,6 +148,28 @@ describe("ConfigurationPage navigation", () => {
     expect(markup).toMatch(/role="switch" aria-checked="true"[^>]*><span><strong>误打断过滤/);
   });
 
+  it.each([false, true])("restores noise suppression as %s", async (enabled) => {
+    const { ConfigurationPage } = await import("./ConfigurationPage");
+    const markup = renderToStaticMarkup(
+      <ConfigurationPage
+        config={{
+          ...DEFAULT_CONFIG,
+          audio: { ...DEFAULT_CONFIG.audio, noise_suppression: enabled },
+        }}
+        active={false}
+        loadError={null}
+        loading={false}
+        requestError={null}
+        onBack={vi.fn()}
+        onRetry={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(markup).toContain("降低麦克风中的背景噪声");
+    expect(markup).toContain(`role="switch" aria-checked="${enabled}"><span><strong>增强降噪`);
+  });
+
   it("renders an in-page confirmation instead of relying on a native dialog", async () => {
     const { ConfigurationLeaveDialog } = await import("./ConfigurationPage");
     const markup = renderToStaticMarkup(
